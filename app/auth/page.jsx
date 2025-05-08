@@ -27,17 +27,9 @@ function Login() {
     setLoading(true)
     setError(null)
     try {
-      // Determine the redirect URL based on environment
-      const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-      const redirectTo = isLocalhost 
-        ? 'http://127.0.0.1:3000/' // Use 127.0.0.1 instead of localhost
-        : `${window.location.origin}/`;
-        
+      // No need to specify redirectTo here as it's already set in the Supabase client
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectTo
-        }
+        provider: 'google'
       })
       if (error) throw error
       

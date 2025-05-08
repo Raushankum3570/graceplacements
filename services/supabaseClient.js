@@ -12,6 +12,18 @@ if (!supabaseUrl || !supabaseAnonKey) {
   });
 }
 
+// Determine site URL for redirects (works in both client and server components)
+const getSiteUrl = () => {
+  if (typeof window !== 'undefined') {
+    // Using 127.0.0.1 instead of localhost for consistent OAuth behavior
+    const hostname = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
+    const port = window.location.port ? `:${window.location.port}` : '';
+    const protocol = window.location.protocol;
+    return `${protocol}//${hostname}${port}`;
+  }
+  return process.env.NEXT_PUBLIC_SITE_URL || 'http://127.0.0.1:3000';
+};
+
 export const supabase = createClient(
   supabaseUrl,
   supabaseAnonKey,
@@ -19,7 +31,9 @@ export const supabase = createClient(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: true
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+      redirectTo: getSiteUrl()
     },
     global: {
       headers: {
