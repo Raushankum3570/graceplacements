@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 // List of authorized admin emails
 const ADMIN_EMAILS = [
   '950321104040@gracecoe.org',
-  'principal@gracecoe.org',
+  '950321104020@gracecoe.org',
   'placement.officer@gracecoe.org',
   'dean@gracecoe.org',
   'tech.admin@gracecoe.org'
@@ -28,11 +28,17 @@ export default function AdminAuth() {
     setError(null);
     
     try {
+      // Determine the redirect URL based on environment
+      const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+      const redirectTo = isLocalhost 
+        ? 'http://127.0.0.1:3000/' // Use 127.0.0.1 instead of localhost
+        : `${window.location.origin}/`;
+      
       // Sign in with Google OAuth
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
