@@ -1,14 +1,50 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { motion } from 'framer-motion'
+import { supabase } from '@/services/supabaseClient'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 function HomePage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Handle auth callback with code parameter
+  useEffect(() => {
+    const code = searchParams?.get('code')
+    
+    if (code) {
+      console.log('Auth code detected, handling authentication...')
+      
+      const handleAuthCode = async () => {
+        try {
+          // Exchange the code for a session
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+          
+          if (error) {
+            console.error('Error exchanging auth code:', error)
+            return
+          }
+          
+          if (data?.session) {
+            console.log('Authentication successful')
+            // Clean up the URL by removing the code parameter
+            router.replace('/')
+          }
+        } catch (err) {
+          console.error('Error handling auth callback:', err)
+        }
+      }
+      
+      handleAuthCode()
+    }
+  }, [searchParams, router])
+
   return (
     <main className="min-h-screen">
       {/* Navbar is included here */}
