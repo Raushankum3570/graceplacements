@@ -14,36 +14,25 @@ function HomePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  // Handle auth callback with code parameter
+  // Handle auth state changes and URL parameters
   useEffect(() => {
-    const code = searchParams?.get('code')
-    
-    if (code) {
-      console.log('Auth code detected, handling authentication...')
-      
-      const handleAuthCode = async () => {
-        try {
-          // Exchange the code for a session
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-          
-          if (error) {
-            console.error('Error exchanging auth code:', error)
-            return
-          }
-          
-          if (data?.session) {
-            console.log('Authentication successful')
-            // Clean up the URL by removing the code parameter
-            router.replace('/')
-          }
-        } catch (err) {
-          console.error('Error handling auth callback:', err)
+    // Let Supabase handle auth code exchange automatically
+    // This works because our supabaseClient.js has detectSessionInUrl: true
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        console.log('Auth state changed: signed in')
+        
+        // Clean up the URL by removing the code parameter if it exists
+        if (searchParams?.get('code')) {
+          router.replace('/')
         }
       }
-      
-      handleAuthCode()
+    })
+    
+    return () => {
+      authListener.subscription.unsubscribe()
     }
-  }, [searchParams, router])
+  }, [router, searchParams])
 
   return (
     <main className="min-h-screen">
