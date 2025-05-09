@@ -54,7 +54,7 @@ export const supabase = createClient(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
-      // Use PKCE flow for all environments
+      // Always use PKCE flow for better security
       flowType: 'pkce',
       storageKey: 'grace_placement_auth',
       // Enable debug mode for development only
@@ -95,8 +95,7 @@ export const supabase = createClient(
             }
           }
         },
-      },
-      // Set a global redirect URL for all auth operations
+      },      // Set a global redirect URL for all auth operations
       redirectTo: getSiteUrl(),
       // Add cookie options for better cross-domain handling
       cookieOptions: {
@@ -105,6 +104,15 @@ export const supabase = createClient(
         domain: '',
         path: '/',
         sameSite: 'lax'
+      },
+      // Add onAuthStateChange callback so we can react to user state changes
+      onAuthStateChange: (event, session) => {
+        console.log('Auth state changed in client:', event);
+        if (event === 'SIGNED_IN' && typeof window !== 'undefined') {
+          // Dispatch a custom event that our components can listen for
+          const authEvent = new CustomEvent('supabase-signed-in', { detail: { session } });
+          window.dispatchEvent(authEvent);
+        }
       }
     },
     global: {

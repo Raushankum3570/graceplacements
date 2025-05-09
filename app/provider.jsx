@@ -18,14 +18,20 @@ function Provider({ children }) {
         // Listen for auth state changes
         const { data: authListener } = supabase.auth.onAuthStateChange(
           async (event, session) => {
-            console.log('Auth event:', event);
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            console.log('Auth event:', event);            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
               console.log('Processing sign-in event with user data');
               await createOrFetchUser(session?.user);
+              // Stay on current page after sign-in - no redirects from homepage
+              const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+              console.log('Current path after sign-in:', currentPath);
             } else if (event === 'SIGNED_OUT') {
               console.log('User signed out');
               setUser(null);
-              router.push('/auth');
+              // Only redirect to auth if not already on homepage
+              const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+              if (currentPath !== '/' && currentPath !== '') {
+                router.push('/auth');
+              }
             } else if (event === 'USER_UPDATED') {
               // Handle user profile updates if needed
               console.log('User data updated');

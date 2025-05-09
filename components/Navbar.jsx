@@ -45,7 +45,6 @@ export default function Navbar() {
       window.removeEventListener('scroll', handleScroll);
     };
   }, [scrolled]);
-
   // Handle click outside for profile dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -54,9 +53,25 @@ export default function Navbar() {
       }
     };
 
+    // Listen for custom auth update events
+    const handleAuthUpdate = () => {
+      console.log('Navbar received auth update event');
+      // Force a refresh of session data
+      const refreshUserSession = async () => {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.user) {
+          console.log('Session exists in navbar update handler');
+        }
+      };
+      refreshUserSession();
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('supabase-auth-update', handleAuthUpdate);
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('supabase-auth-update', handleAuthUpdate);
     };
   }, [isProfileMenuOpen]);
 
