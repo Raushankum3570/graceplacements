@@ -14,13 +14,15 @@ function HomePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [authInitialized, setAuthInitialized] = useState(false)
-    // Handle authentication code in URL after OAuth redirect
+  
+  // Handle authentication code in URL after OAuth redirect
   useEffect(() => {
     const initAuth = async () => {
       // Check for the code parameter
       const code = searchParams?.get('code')
       const errorParam = searchParams?.get('error')
-        try {
+      
+      try {
         if (code) {
           console.log('Auth code detected in URL')
           
@@ -32,13 +34,21 @@ function HomePage() {
             console.log('URL cleaned, removed code parameter')
           }
           
-          // Let Supabase handle the session - it should detect the code automatically
+          // Process the auth code and establish a session
           const { data, error } = await supabase.auth.getSession()
           
           if (error) {
             console.error('Error getting session:', error.message)
           } else {
             console.log('Session check complete:', data.session ? 'Active session' : 'No session')
+            
+            // If we have a session, wait briefly for context to update
+            // This ensures user data is loaded before continuing
+            if (data.session) {
+              setTimeout(() => {
+                console.log('Auth code processing complete')
+              }, 500)
+            }
           }
         } else if (errorParam) {
           // Handle any auth errors

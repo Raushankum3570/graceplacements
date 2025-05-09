@@ -15,31 +15,39 @@ function Provider({ children }) {
     // Check for an existing session first
     const initializeAuth = async () => {
       try {
-        // Listen for auth state changes
-        const { data: authListener } = supabase.auth.onAuthStateChange(
+        // Listen for auth state changes        const { data: authListener } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             console.log('Auth event:', event);
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+              console.log('Processing sign-in event with user data');
               await createOrFetchUser(session?.user);
+              // Stay on current page after sign-in instead of redirecting
             } else if (event === 'SIGNED_OUT') {
+              console.log('User signed out');
               setUser(null);
-              router.push('/auth');
+              // Only redirect to auth if not on homepage
+              const currentPath = window.location.pathname;
+              if (currentPath !== '/' && currentPath !== '') {
+                router.push('/auth');
+              }
             } else if (event === 'USER_UPDATED') {
               // Handle user profile updates if needed
+              console.log('User data updated');
               await createOrFetchUser(session?.user);
             }
           }
         );
-        
-        // Check for an existing session
+          // Check for an existing session
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionData?.session?.user) {
+          console.log('Found existing session, setting up user data');
           await createOrFetchUser(sessionData.session.user);
         } else {
+          console.log('No session found');
           setIsLoading(false);
-          // Uncomment the following line if you want to redirect to auth page
-          // router.push('/auth');
+          // Don't redirect from homepage, let user browse as non-authenticated
+          // Protected routes are handled by Navbar component
         }
         
         return () => {
@@ -75,9 +83,7 @@ function Provider({ children }) {
       const isAdminUser = ADMIN_EMAILS.includes(authUser.email.toLowerCase());
       
       // Check for admin status in user metadata
-      const isAdminInMetadata = authUser.user_metadata?.is_admin === true;
-
-      // First check if user exists in our Users table
+      const isAdminInMetadata = authUser.user_metadata?.is_admin === true;      // First check if user exists in our Users table
       const { data: existingUsers, error: fetchError } = await supabase
         .from('Users')
         .select('*')
@@ -92,6 +98,8 @@ function Provider({ children }) {
         
       // Check if a user exists and use the first one if multiple
       const existingUser = existingUsers && existingUsers.length > 0 ? existingUsers[0] : null;
+      
+      console.log('User data check:', existingUser ? 'Found existing user' : 'Creating new user');
       
       // Determine final admin status from all sources
       const finalAdminStatus = isAdminUser || isAdminInMetadata || (existingUser?.is_admin === true);
