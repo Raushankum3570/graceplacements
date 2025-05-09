@@ -1,49 +1,56 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Get environment variables
+// Create a single supabase client for interacting with your database
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const explicitSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
-// Add validation to help with debugging
+// Add some validation to help with debugging
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables!', {
-    url: supabaseUrl ? 'Defined' : 'Missing',
-    key: supabaseAnonKey ? 'Defined' : 'Missing'
+  console.error('Missing Supabase environment variables!', { 
+    url: supabaseUrl ? 'Defined' : 'Missing', 
+    key: supabaseAnonKey ? 'Defined' : 'Missing' 
   });
 }
 
-// Function to determine the site URL for redirects
+// Determine site URL for redirects (works in both client and server components)
 const getSiteUrl = () => {
-  // First priority: Use explicit NEXT_PUBLIC_SITE_URL if provided
-  if (explicitSiteUrl) {
-    console.log('Using environment-provided site URL:', explicitSiteUrl);
-    return explicitSiteUrl;
+  // If site URL is explicitly provided in environment variables, use that
+  if (siteUrl) {
+    console.log('Using environment-provided site URL:', siteUrl);
+    return siteUrl;
   }
   
-  // Second priority: Use window.location.origin in browser context
-  if (typeof window !== 'undefined') {
-    const origin = window.location.origin;
-    console.log('Using detected URL from browser:', origin);
-    return origin;
-  }
+  // For sites deployed on Vercel or production-like environments
+  const isProduction = process.env.NODE_ENV === 'production';
   
-  // Fallback for server-side rendering
-  console.log('Warning: Using fallback URL in server context (this should be overridden in client)');
-  return explicitSiteUrl || 'https://your-production-domain.com';
-};
-
-// Check if we're in a development environment
-const isDevelopment = () => {
+  // Otherwise, detect from browser
   if (typeof window !== 'undefined') {
+    // Get the hostname and protocol
     const hostname = window.location.hostname;
-    return hostname === 'localhost' || hostname === '127.0.0.1';
+    const protocol = window.location.protocol;
+    
+    // Check for different environments
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      // For local development, use the current protocol and port
+      const port = window.location.port || '3000';
+      const localUrl = `${protocol}//${hostname}:${port}`;
+      console.log('Using local development URL:', localUrl);
+      return localUrl;
+    } else {
+      // For deployed environment, use the full origin with https protocol for production
+      const origin = window.location.origin;
+      console.log('Using detected production URL:', origin);
+      return origin;
+    }
   }
-  // In SSR context, check if NODE_ENV is development
-  return process.env.NODE_ENV === 'development';
+  
+  // Fallback for server-side rendering when no window is available
+  console.log('Using fallback URL (server context)');
+  return 'http://127.0.0.1:3000';
 };
 
-// Create Supabase client
+// Create Supabase client with the correct OAuth handling
 export const supabase = createClient(
   supabaseUrl,
   supabaseAnonKey,
@@ -52,13 +59,14 @@ export const supabase = createClient(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
-      // Use pkce flow type for both development and production for consistency
+      // Use PKCE flow for all environments
       flowType: 'pkce',
       storageKey: 'grace_placement_auth',
       storage: {
         getItem: (key) => {
           if (typeof window !== 'undefined') {
             const item = localStorage.getItem(key);
+            console.log(`Auth storage: Retrieved ${key}`);
             return item;
           }
           return null;
@@ -66,15 +74,17 @@ export const supabase = createClient(
         setItem: (key, value) => {
           if (typeof window !== 'undefined') {
             localStorage.setItem(key, value);
+            console.log(`Auth storage: Stored ${key}`);
           }
         },
         removeItem: (key) => {
           if (typeof window !== 'undefined') {
             localStorage.removeItem(key);
+            console.log(`Auth storage: Removed ${key}`);
           }
         },
       },
-      // Set redirect URL - this will be used for all auth operations
+      // Set a global redirect URL for all auth operations
       redirectTo: getSiteUrl()
     },
     global: {
@@ -84,4 +94,4 @@ export const supabase = createClient(
       },
     }
   }
-);
+)
