@@ -110,13 +110,12 @@ function HomePage() {
         console.log('Auth state changed: signed out')
       }
     })
-    
-    return () => {
+      return () => {
       if (authListener?.subscription?.unsubscribe) {
         authListener.subscription.unsubscribe()
       }
     }
-  }, [searchParams])
+  }, [searchParams, router])
 
   return (
     <main className="min-h-screen">
@@ -140,7 +139,7 @@ function HomePage() {
                 Find Your Dream <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Placement</span>
               </h1>
               <p className="text-lg md:text-xl text-gray-600 max-w-lg">
-                Connect with top companies and land your perfect job through Grace Placement's 
+                Connect with top companies and land your perfect job through Grace Placement&apos;s 
                 comprehensive career platform.
               </p>
               <div className="flex flex-wrap gap-4 pt-4">
@@ -242,7 +241,7 @@ function HomePage() {
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Choose Grace Placement</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              We've helped thousands of students find their perfect career path
+              We&apos;ve helped thousands of students find their perfect career path
             </p>
           </motion.div>
 
@@ -393,7 +392,7 @@ function HomePage() {
                         </svg>
                       ))}
                     </div>
-                    <p className="text-gray-600 mb-6 flex-grow italic">"{testimonial.quote}"</p>
+                    <p className="text-gray-600 mb-6 flex-grow italic">&quot;{testimonial.quote}&quot;</p>
                     <div>
                       <p className="font-semibold">{testimonial.name}</p>
                       <p className="text-sm text-gray-500">{testimonial.title}</p>
@@ -487,13 +486,13 @@ function HomePage() {
                 <li><Link href="#" className="text-gray-600 hover:text-blue-600">Skill Development</Link></li>
               </ul>
             </div>
-              <div>
+s            
+            <div>
               <h3 className="font-semibold text-lg mb-4">Contact</h3>
               <ul className="space-y-2">
                 <li className="text-gray-600">info@graceplacement.com</li>
                 <li className="text-gray-600">+1 (555) 123-4567</li>
                 <li className="text-gray-600">123 Placement Street, Career City</li>
-                <li><Link href="/admin-auth" className="text-blue-600 hover:underline text-sm">Administrator Login</Link></li>
               </ul>
             </div>
           </div>

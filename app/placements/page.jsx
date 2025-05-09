@@ -484,7 +484,7 @@ export default function PlacementsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900">No matching placements</h3>
-          <p className="mt-2 text-gray-500">Try adjusting your search or filter to find what you're looking for</p>
+          <p className="mt-2 text-gray-500">Try adjusting your search or filter to find what you&apos;re looking for</p>
           <Button 
             variant="outline" 
             onClick={() => {
