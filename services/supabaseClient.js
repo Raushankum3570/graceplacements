@@ -21,33 +21,31 @@ const getSiteUrl = () => {
     return siteUrl;
   }
   
-  // For sites deployed on Vercel or production-like environments
-  const isProduction = process.env.NODE_ENV === 'production';
-  
-  // Otherwise, detect from browser
+  // Detect if we're in a browser environment
   if (typeof window !== 'undefined') {
-    // Get the hostname and protocol
+    // Get the hostname, protocol and current origin
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
+    const currentOrigin = window.location.origin;
     
-    // Check for different environments
+    // For localhost environments
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      // For local development, use the current protocol and port
-      const port = window.location.port || '3000';
-      const localUrl = `${protocol}//${hostname}:${port}`;
-      console.log('Using local development URL:', localUrl);
-      return localUrl;
+      // Ensure we use the exact current port to prevent any redirect issues
+      console.log('Using exact local development URL:', currentOrigin);
+      return currentOrigin;
     } else {
-      // For deployed environment, use the full origin with https protocol for production
-      const origin = window.location.origin;
-      console.log('Using detected production URL:', origin);
-      return origin;
+      // For deployed environments
+      console.log('Using detected production URL:', currentOrigin);
+      return currentOrigin;
     }
   }
   
   // Fallback for server-side rendering when no window is available
-  console.log('Using fallback URL (server context)');
-  return 'http://127.0.0.1:3000';
+  // This is only used during SSR, the client-side value will be used for actual auth
+  const fallbackUrl = process.env.NODE_ENV === 'production' ? 
+    'https://grace-placement.vercel.app' : 'http://localhost:3000';
+  console.log('Using fallback URL (server context):', fallbackUrl);
+  return fallbackUrl;
 };
 
 // Create Supabase client with the correct OAuth handling
@@ -59,32 +57,46 @@ export const supabase = createClient(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
-      // Use PKCE flow for all environments
+      // Always use PKCE flow for better security and consistency
       flowType: 'pkce',
+      // Ensure storage key is consistent
       storageKey: 'grace_placement_auth',
+      // Add debug logging to track auth operations
+      debug: process.env.NODE_ENV !== 'production',
       storage: {
         getItem: (key) => {
+          // Only run in browser context
           if (typeof window !== 'undefined') {
-            const item = localStorage.getItem(key);
-            console.log(`Auth storage: Retrieved ${key}`);
-            return item;
+            try {
+              const item = localStorage.getItem(key);
+              return item;
+            } catch (err) {
+              console.error('Auth storage getItem error:', err);
+              return null;
+            }
           }
           return null;
         },
         setItem: (key, value) => {
           if (typeof window !== 'undefined') {
-            localStorage.setItem(key, value);
-            console.log(`Auth storage: Stored ${key}`);
+            try {
+              localStorage.setItem(key, value);
+            } catch (err) {
+              console.error('Auth storage setItem error:', err);
+            }
           }
         },
         removeItem: (key) => {
           if (typeof window !== 'undefined') {
-            localStorage.removeItem(key);
-            console.log(`Auth storage: Removed ${key}`);
+            try {
+              localStorage.removeItem(key);
+            } catch (err) {
+              console.error('Auth storage removeItem error:', err);
+            }
           }
         },
       },
-      // Set a global redirect URL for all auth operations
+      // Critical: Set a consistent redirect URL that works across environments
       redirectTo: getSiteUrl()
     },
     global: {
