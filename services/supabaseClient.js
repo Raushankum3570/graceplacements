@@ -43,7 +43,7 @@ const getSiteUrl = () => {
   // Fallback for server-side rendering when no window is available
   // This is only used during SSR, the client-side value will be used for actual auth
   const fallbackUrl = process.env.NODE_ENV === 'production' ? 
-    'https://grace-placement.vercel.app' : 'http://localhost:3000';
+    'https://graceplacement-two.vercel.app' : 'http://localhost:3000';
   console.log('Using fallback URL (server context):', fallbackUrl);
   return fallbackUrl;
 };
