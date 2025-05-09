@@ -48,6 +48,15 @@ const getSiteUrl = () => {
   return 'http://127.0.0.1:3000';
 };
 
+// Function to check if we're running on localhost
+const isLocalhost = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.hostname === 'localhost' || 
+           window.location.hostname === '127.0.0.1';
+  }
+  return false;
+};
+
 // Create Supabase client with the correct OAuth handling
 export const supabase = createClient(
   supabaseUrl,
@@ -57,7 +66,8 @@ export const supabase = createClient(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
-      flowType: 'pkce',
+      // Use implicit flow for localhost to avoid PKCE issues
+      flowType: isLocalhost() ? 'implicit' : 'pkce',
       storageKey: 'grace_placement_auth',
       storage: {
         getItem: (key) => {

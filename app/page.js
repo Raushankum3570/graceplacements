@@ -14,7 +14,7 @@ function HomePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [authInitialized, setAuthInitialized] = useState(false)
-    // Handle authentication code in URL after OAuth redirect
+  // Handle authentication code in URL after OAuth redirect
   useEffect(() => {
     const initAuth = async () => {
       // Check for the code parameter
@@ -24,26 +24,44 @@ function HomePage() {
         console.log('Auth code detected in URL:', code)
         
         try {
-          // Wait for Supabase to handle the authentication code automatically
-          // The delay helps ensure code processing completes
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          
-          // Explicitly get the session after code is processed
-          const { data, error } = await supabase.auth.getSession()
-          
-          if (error) {
-            console.error('Error getting session:', error.message)
-          } else {
-            console.log('Session established successfully:', data.session ? 'Yes' : 'No')
-          }
-          
-          // Clean up the URL by removing the code parameter
-          // This is important to prevent auth issues on refresh
-          if (typeof window !== 'undefined') {
-            // Use window.history to clean the URL without a full page reload
+          // For localhost environment, we need to explicitly handle the code exchange
+          // This solves the PKCE code verifier issues on localhost
+          if (typeof window !== 'undefined' && 
+              (window.location.hostname === 'localhost' || 
+               window.location.hostname === '127.0.0.1')) {
+            
+            // First clean up the URL to prevent issues with refresh
             const cleanUrl = window.location.pathname
             window.history.replaceState({}, document.title, cleanUrl)
             console.log('URL cleaned, removed code parameter')
+            
+            // Try to exchange the auth code directly
+            try {
+              // Reload the page to allow Supabase to reinitialize
+              // This is a reliable method to establish the session after code processing
+              setTimeout(() => {
+                console.log('Reloading page to finalize auth...')
+                window.location.reload()
+              }, 500)
+            } catch (codeExchangeError) {
+              console.error('Error exchanging auth code:', codeExchangeError)
+            }
+          } else {
+            // For production environments, use the standard flow
+            const { data, error } = await supabase.auth.getSession()
+            
+            if (error) {
+              console.error('Error getting session:', error.message)
+            } else {
+              console.log('Session established successfully:', data.session ? 'Yes' : 'No')
+              
+              // Clean up the URL
+              if (typeof window !== 'undefined') {
+                const cleanUrl = window.location.pathname
+                window.history.replaceState({}, document.title, cleanUrl)
+                console.log('URL cleaned, removed code parameter')
+              }
+            }
           }
         } catch (err) {
           console.error('Error during auth initialization:', err)
