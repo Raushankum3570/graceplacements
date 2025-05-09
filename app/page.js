@@ -14,25 +14,37 @@ function HomePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  // Handle auth state changes and URL parameters
+  // Handle authentication code in URL after OAuth redirect
   useEffect(() => {
+    // Check for the code parameter
+    const code = searchParams?.get('code')
+    
+    if (code) {
+      console.log('Auth code detected in URL')
+      
+      // Clean up the URL by removing the code parameter
+      // This is important to prevent auth issues on refresh
+      if (typeof window !== 'undefined') {
+        // Use window.history to clean the URL without a full page reload
+        const cleanUrl = window.location.pathname
+        window.history.replaceState({}, document.title, cleanUrl)
+      }
+    }
+    
     // Let Supabase handle auth code exchange automatically
     // This works because our supabaseClient.js has detectSessionInUrl: true
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         console.log('Auth state changed: signed in')
-        
-        // Clean up the URL by removing the code parameter if it exists
-        if (searchParams?.get('code')) {
-          router.replace('/')
-        }
       }
     })
     
     return () => {
-      authListener.subscription.unsubscribe()
+      if (authListener?.subscription?.unsubscribe) {
+        authListener.subscription.unsubscribe()
+      }
     }
-  }, [router, searchParams])
+  }, [searchParams])
 
   return (
     <main className="min-h-screen">
