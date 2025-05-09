@@ -62,14 +62,25 @@ function Login() {
           throw error
         }
       }
-      
-      // Successfully signed in
+        // Successfully signed in
       console.log('Successfully authenticated, redirecting to homepage...')
       
-      // Force a delay to ensure authentication state is properly updated
-      setTimeout(() => {
-        router.push('/')
-      }, 100)
+      // Dispatch auth event for other components to sync
+      if (typeof window !== 'undefined') {
+        const authEvent = new CustomEvent('supabase-auth-update', {
+          detail: { 
+            action: 'signed_in', 
+            source: 'auth_page',
+            user: data.user,
+            timestamp: new Date().getTime()
+          }
+        })
+        window.dispatchEvent(authEvent)
+        console.log('Auth event dispatched from auth page')
+      }
+      
+      // Redirect to home page
+      router.push('/')
       
     } catch (err) {
       console.error('Error signing in with email:', err)

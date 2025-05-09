@@ -39,13 +39,30 @@ function HomePage() {
           
           if (error) {
             console.error('Error getting session:', error.message)
-          } else {
-            console.log('Session check complete:', data.session ? 'Active session' : 'No session')
-              // If we have a session, wait briefly for context to update
-            // This ensures user data is loaded before continuing
+          } else {            console.log('Session check complete:', data.session ? 'Active session' : 'No session')
+              // If we have a session, ensure user data is loaded and notify components
             if (data.session) {
               console.log('Session established after auth code')
-              // No need to redirect - we're already on the homepage
+              
+              // Create and dispatch custom event to update auth state in other components
+              if (typeof window !== 'undefined') {
+                const authEvent = new CustomEvent('supabase-auth-update', {
+                  detail: {
+                    action: 'signed_in',
+                    source: 'page.js',
+                    user: data.session.user,
+                    timestamp: new Date().getTime()
+                  }
+                })
+                window.dispatchEvent(authEvent)
+                console.log('Auth update event dispatched from page.js after sign-in')
+                
+                // Redirect to home page if not already there
+                if (window.location.pathname !== '/') {
+                  router.push('/')
+                  console.log('Redirecting to homepage after sign-in')
+                }
+              }
             }
           }
         } else if (errorParam) {
@@ -65,11 +82,30 @@ function HomePage() {
     }
     
     initAuth()
-    
-    // Listen for auth state changes
+      // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         console.log('Auth state changed: signed in')
+        
+        // Broadcast event to update user state in all components
+        if (typeof window !== 'undefined') {
+          const authEvent = new CustomEvent('supabase-auth-update', {
+            detail: {
+              action: 'signed_in',
+              source: 'page.js_listener',
+              user: session?.user,
+              timestamp: new Date().getTime()
+            }
+          })
+          window.dispatchEvent(authEvent)
+          console.log('Auth state change event broadcasted')
+          
+          // Redirect to home page if not already there
+          if (window.location.pathname !== '/') {
+            router.push('/')
+            console.log('Redirecting to homepage after auth state change')
+          }
+        }
       } else if (event === 'SIGNED_OUT') {
         console.log('Auth state changed: signed out')
       }

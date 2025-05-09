@@ -122,13 +122,18 @@ export default function Navbar() {
     };
     
     checkAuthState();
-    
-    // Set up an auth subscription directly in the navbar
+      // Set up an auth subscription directly in the navbar
     const { data: authSubscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
           console.log('Navbar detected sign-in directly');
-          checkAuthState();
+          await checkAuthState();
+          
+          // If we're on the auth page, redirect to home
+          if (typeof window !== 'undefined' && pathname === '/auth') {
+            console.log('Navbar redirecting from auth page to home');
+            router.push('/');
+          }
         }
       }
     );

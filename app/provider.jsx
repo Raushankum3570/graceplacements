@@ -30,10 +30,15 @@ function Provider({ children }) {
                 window.dispatchEvent(authEvent);
                 console.log('Auth update event dispatched from provider');
               }
-              
-              // Stay on current page after sign-in - no redirects from homepage
+                // Redirect to homepage after sign-in if needed
               const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
               console.log('Current path after sign-in:', currentPath);
+              
+              // If on auth page or other non-home pages, redirect to home
+              if (typeof window !== 'undefined' && currentPath.includes('/auth')) {
+                console.log('Redirecting from auth page to homepage');
+                router.push('/');
+              }
             } else if (event === 'SIGNED_OUT') {
               console.log('User signed out');
               setUser(null);
