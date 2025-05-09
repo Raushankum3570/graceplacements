@@ -23,13 +23,16 @@ const getSiteUrl = () => {
   
   // Otherwise, detect from browser
   if (typeof window !== 'undefined') {
-    // Get the hostname
+    // Get the hostname and protocol
     const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
     
     // Check for different environments
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      // For local development, use 127.0.0.1 instead of localhost to avoid cookie issues
-      const localUrl = 'http://127.0.0.1:3000';
+      // For local development, use the current protocol and port
+      const port = window.location.port || '3000';
+      // Use the actual hostname from the browser (localhost or 127.0.0.1)
+      const localUrl = `${protocol}//${hostname}:${port}`;
       console.log('Using local development URL:', localUrl);
       return localUrl;
     } else {
@@ -55,6 +58,29 @@ export const supabase = createClient(
       persistSession: true,
       detectSessionInUrl: true,
       flowType: 'pkce',
+      storageKey: 'grace_placement_auth',
+      storage: {
+        getItem: (key) => {
+          if (typeof window !== 'undefined') {
+            const item = localStorage.getItem(key);
+            console.log(`Auth storage: Retrieved ${key}`);
+            return item;
+          }
+          return null;
+        },
+        setItem: (key, value) => {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(key, value);
+            console.log(`Auth storage: Stored ${key}`);
+          }
+        },
+        removeItem: (key) => {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(key);
+            console.log(`Auth storage: Removed ${key}`);
+          }
+        },
+      },
       // Set a global redirect URL for all auth operations
       redirectTo: getSiteUrl()
     },
