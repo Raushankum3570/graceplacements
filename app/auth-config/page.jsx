@@ -145,7 +145,7 @@ export default function AuthConfig() {
       <div className="mt-12 bg-gray-50 p-6 rounded-lg border text-sm">
         <h3 className="font-medium mb-2">Technical Details:</h3>
         <p className="mb-2">
-          The error "Email logins are disabled" indicates that your Supabase project has email authentication turned off.
+          The error &quot;Email logins are disabled&quot; indicates that your Supabase project has email authentication turned off.
           This can be changed in your Supabase project settings.
         </p>
         <p>

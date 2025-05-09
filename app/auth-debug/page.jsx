@@ -330,13 +330,12 @@ export default function AuthDebugger() {
       
       {/* Help Instructions */}
       <div className="mt-8 p-6 bg-blue-50 rounded-lg">
-        <h2 className="text-lg font-semibold mb-2">Troubleshooting Instructions:</h2>
-        <ol className="list-decimal list-inside space-y-2 text-gray-700">
-          <li>First, check that the environment variables are properly defined and display as "Defined"</li>
-          <li>Test "Check Session" to see if you're currently authenticated</li>
-          <li>If needed, "Test Sign Out" to clear any existing sessions</li>
-          <li>Test "Sign Up" with your email to create a new account</li>
-          <li>After signing up, try "Sign In" with the same credentials</li>
+        <h2 className="text-lg font-semibold mb-2">Troubleshooting Instructions:</h2>        <ol className="list-decimal list-inside space-y-2 text-gray-700">
+          <li>First, check that the environment variables are properly defined and display as &quot;Defined&quot;</li>
+          <li>Test &quot;Check Session&quot; to see if you&apos;re currently authenticated</li>
+          <li>If needed, &quot;Test Sign Out&quot; to clear any existing sessions</li>
+          <li>Test &quot;Sign Up&quot; with your email to create a new account</li>
+          <li>After signing up, try &quot;Sign In&quot; with the same credentials</li>
           <li>Look at the JSON response for specific error messages</li>
           <li>Common issues:
             <ul className="list-disc list-inside ml-4 mt-1">
