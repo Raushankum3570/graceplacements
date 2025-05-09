@@ -13,56 +13,49 @@ import { useRouter, useSearchParams } from 'next/navigation'
 function HomePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [authInitialized, setAuthInitialized] = useState(false)  
-  
-  // Handle authentication code in URL after OAuth redirect  
-  useEffect(() => {    const initAuth = async () => {
-      try {
-        // Check for the code parameter
-        const code = searchParams?.get('code')
-        const errorParam = searchParams?.get('error')
-        
-        if (errorParam) {
-          console.error('OAuth error returned:', errorParam)
-        }
-        
+  const [authInitialized, setAuthInitialized] = useState(false)
+    // Handle authentication code in URL after OAuth redirect
+  useEffect(() => {
+    const initAuth = async () => {
+      // Check for the code parameter
+      const code = searchParams?.get('code')
+      const errorParam = searchParams?.get('error')
+        try {
         if (code) {
           console.log('Auth code detected in URL')
           
           // First, clean up the URL by removing the code parameter
-          // This prevents issues with refreshes and duplicate auth attempts
           if (typeof window !== 'undefined') {
-            // Just go to the base path without any parameters
-            window.history.replaceState({}, document.title, window.location.pathname)
+            // Clean URL without causing navigation
+            const cleanUrl = window.location.pathname
+            window.history.replaceState({}, document.title, cleanUrl)
             console.log('URL cleaned, removed code parameter')
           }
           
-          // Let Supabase handle the auth code automatically 
-          // It will detect the code in the URL (even though we cleaned it from the visible URL)
+          // Let Supabase handle the session - it should detect the code automatically
           const { data, error } = await supabase.auth.getSession()
           
           if (error) {
             console.error('Error getting session:', error.message)
           } else {
-            console.log('Session established successfully:', data.session ? 'Yes' : 'No')
-            
-            // No need to redirect - we're already on the homepage
-            // The auth state changes will be handled by the provider
+            console.log('Session check complete:', data.session ? 'Active session' : 'No session')
           }
+        } else if (errorParam) {
+          // Handle any auth errors
+          console.error('Auth error:', errorParam, searchParams?.get('error_description') || '')
         } else {
-          // No code in URL, just check if we have an active session
+          // Just check for existing session when no code is present
           const { data } = await supabase.auth.getSession()
-          console.log('Checked existing session:', data.session ? 'Active' : 'None')
+          console.log('Session check:', data.session ? 'Active session' : 'No session')
         }
       } catch (err) {
         console.error('Error during auth initialization:', err)
+      } finally {
+        // Always mark auth as initialized to avoid any loading states
+        setAuthInitialized(true)
       }
-      
-      // Always set auth as initialized
-      setAuthInitialized(true)
     }
     
-    // Initialize auth without forcing any redirects
     initAuth()
     
     // Listen for auth state changes

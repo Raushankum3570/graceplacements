@@ -20,31 +20,28 @@ const getSiteUrl = () => {
     console.log('Using environment-provided site URL:', siteUrl);
     return siteUrl;
   }
-  
-  // Detect if we're in a browser environment
+
+  // In browser context, use the current origin to ensure consistency
   if (typeof window !== 'undefined') {
-    // Get the hostname, protocol and current origin
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    const currentOrigin = window.location.origin;
+    const origin = window.location.origin;
     
-    // For localhost environments
+    // Add detailed logging for debugging
+    const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      // Ensure we use the exact current port to prevent any redirect issues
-      console.log('Using exact local development URL:', currentOrigin);
-      return currentOrigin;
+      console.log(`Using exact local URL: ${origin}`);
     } else {
-      // For deployed environments
-      console.log('Using detected production URL:', currentOrigin);
-      return currentOrigin;
+      console.log(`Using production URL: ${origin}`);
     }
+    
+    return origin;
   }
   
   // Fallback for server-side rendering when no window is available
-  // This is only used during SSR, the client-side value will be used for actual auth
-  const fallbackUrl = process.env.NODE_ENV === 'production' ? 
-    'https://graceplacement-two.vercel.app' : 'http://localhost:3000';
-  console.log('Using fallback URL (server context):', fallbackUrl);
+  const fallbackUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://grace-placement.vercel.app' 
+    : 'http://localhost:3000';
+  
+  console.log(`Using fallback URL (server context): ${fallbackUrl}`);
   return fallbackUrl;
 };
 
@@ -57,21 +54,22 @@ export const supabase = createClient(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
-      // Always use PKCE flow for better security and consistency
+      // Use PKCE flow for all environments
       flowType: 'pkce',
-      // Ensure storage key is consistent
       storageKey: 'grace_placement_auth',
-      // Add debug logging to track auth operations
+      // Enable debug mode for development only
       debug: process.env.NODE_ENV !== 'production',
       storage: {
         getItem: (key) => {
-          // Only run in browser context
           if (typeof window !== 'undefined') {
             try {
               const item = localStorage.getItem(key);
+              if (item) {
+                console.log(`Auth storage: Retrieved ${key} successfully`);
+              }
               return item;
-            } catch (err) {
-              console.error('Auth storage getItem error:', err);
+            } catch (error) {
+              console.error(`Error retrieving ${key} from localStorage:`, error);
               return null;
             }
           }
@@ -81,8 +79,9 @@ export const supabase = createClient(
           if (typeof window !== 'undefined') {
             try {
               localStorage.setItem(key, value);
-            } catch (err) {
-              console.error('Auth storage setItem error:', err);
+              console.log(`Auth storage: Stored ${key} successfully`);
+            } catch (error) {
+              console.error(`Error storing ${key} in localStorage:`, error);
             }
           }
         },
@@ -90,14 +89,23 @@ export const supabase = createClient(
           if (typeof window !== 'undefined') {
             try {
               localStorage.removeItem(key);
-            } catch (err) {
-              console.error('Auth storage removeItem error:', err);
+              console.log(`Auth storage: Removed ${key} successfully`);
+            } catch (error) {
+              console.error(`Error removing ${key} from localStorage:`, error);
             }
           }
         },
       },
-      // Critical: Set a consistent redirect URL that works across environments
-      redirectTo: getSiteUrl()
+      // Set a global redirect URL for all auth operations
+      redirectTo: getSiteUrl(),
+      // Add cookie options for better cross-domain handling
+      cookieOptions: {
+        name: 'sb-auth-token',
+        lifetime: 60 * 60 * 24 * 7, // 7 days
+        domain: '',
+        path: '/',
+        sameSite: 'lax'
+      }
     },
     global: {
       headers: {
