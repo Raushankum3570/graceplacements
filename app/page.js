@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
@@ -13,29 +13,48 @@ import { useRouter, useSearchParams } from 'next/navigation'
 function HomePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [authInitialized, setAuthInitialized] = useState(false)
   
   // Handle authentication code in URL after OAuth redirect
   useEffect(() => {
-    // Check for the code parameter
-    const code = searchParams?.get('code')
-    
-    if (code) {
-      console.log('Auth code detected in URL')
+    const initAuth = async () => {
+      // Check for the code parameter
+      const code = searchParams?.get('code')
       
-      // Clean up the URL by removing the code parameter
-      // This is important to prevent auth issues on refresh
-      if (typeof window !== 'undefined') {
-        // Use window.history to clean the URL without a full page reload
-        const cleanUrl = window.location.pathname
-        window.history.replaceState({}, document.title, cleanUrl)
+      if (code) {
+        console.log('Auth code detected in URL')
+        
+        try {
+          // Let Supabase handle the authentication
+          const { data, error } = await supabase.auth.getSession()
+          
+          if (error) {
+            console.error('Error getting session:', error.message)
+          }
+          
+          // Clean up the URL by removing the code parameter
+          // This is important to prevent auth issues on refresh
+          if (typeof window !== 'undefined') {
+            // Use window.history to clean the URL without a full page reload
+            const cleanUrl = window.location.pathname
+            window.history.replaceState({}, document.title, cleanUrl)
+          }
+        } catch (err) {
+          console.error('Error during auth initialization:', err)
+        }
       }
+      
+      setAuthInitialized(true)
     }
     
-    // Let Supabase handle auth code exchange automatically
-    // This works because our supabaseClient.js has detectSessionInUrl: true
+    initAuth()
+    
+    // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         console.log('Auth state changed: signed in')
+      } else if (event === 'SIGNED_OUT') {
+        console.log('Auth state changed: signed out')
       }
     })
     
