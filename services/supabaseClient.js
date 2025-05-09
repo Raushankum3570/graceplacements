@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+const skipEmailVerification = true; // Set to true to allow immediate sign-in without verification
 
 // Add some validation to help with debugging
 if (!supabaseUrl || !supabaseAnonKey) {

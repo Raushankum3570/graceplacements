@@ -21,7 +21,8 @@ function Login() {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [activeTab, setActiveTab] = useState("signin")
-  const [unverifiedEmail, setUnverifiedEmail] = useState(null)  // We're using email-based authentication only
+  const [unverifiedEmail, setUnverifiedEmail] = useState(null)
+  // We're using email-based authentication only
   const signInWithEmail = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -29,51 +30,34 @@ function Login() {
     setUnverifiedEmail(null)
     
     try {
-      console.log('Attempting to sign in with:', email);
+      console.log('Attempting to sign in with:', email)
       
-      // Validate input first
-      if (!email.trim() || !password) {
-        setError('Email and password are required');
-        setLoading(false);
-        return;
-      }
-        // Try to sign in with email and password
+      // Try to sign in with email and password
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password
-      });
+      })
       
       // Handle specific error cases
       if (error) {
-        console.error('Sign-in error:', error);
+        console.error('Sign-in error:', error)
         
-        if (error.message.includes('Invalid login credentials')) {          // Check if user exists but password is wrong
-          const { data: checkData, error: checkError } = await supabase.auth.resetPasswordForEmail(
-            email.trim(),
-            { redirectTo: null } // Just checking if the email exists, not actually sending reset email
-          );
-          
-          if (!checkError) {
-            setError('The password you entered is incorrect. Please try again or use the forgot password link.');
-          } else {
-            setError('No account found with this email. Please sign up first.');
-            // Suggest switching to sign up tab
-            setTimeout(() => {
-              switchToSignUp();
-            }, 2000);
-          }
-          return;        } else if (error.message.includes('Email not confirmed')) {
-          setUnverifiedEmail(email);
-          setError('Your email has not been confirmed. Please check your inbox or click the button below to resend the confirmation email.');
-          return;
+        if (error.message.includes('Invalid login credentials')) {
+          setError('The email or password you entered is incorrect. Please try again.')
+          return
+        } else if (error.message.includes('Email not confirmed')) {
+          setUnverifiedEmail(email)
+          setError('Your email has not been confirmed. Please check your inbox or click the button below to resend the confirmation email.')
+          return
         } else {
-          setError(error.message);
-          return;
+          setError(error.message)
+          return
         }
       }
-        // Successfully signed in
-      console.log('Successfully authenticated, redirecting to homepage...');
-      console.log('Sign in successful! User:', data.user);
+      
+      // Successfully signed in
+      console.log('Successfully authenticated, redirecting to homepage...')
+        console.log('Sign in successful! User:', data.user)
     
       // Dispatch auth event for other components to sync
       if (typeof window !== 'undefined') {
@@ -84,46 +68,48 @@ function Login() {
             user: data.user,
             timestamp: new Date().getTime()
           }
-        });
-        window.dispatchEvent(authEvent);
-        console.log('Auth event dispatched from auth page');
+        })
+        window.dispatchEvent(authEvent)
+        console.log('Auth event dispatched from auth page')
       }
       
       // Check if user might be an admin
       if (email.toLowerCase().includes('admin') || email.toLowerCase().includes('gracecoe.org')) {
-        console.log('Admin user detected, redirecting to admin dashboard');
-        router.push('/admin');
-      } else {        // Redirect regular user to home page
-        console.log('Redirecting to homepage');
-        router.push('/');
+        console.log('Admin user detected, redirecting to admin dashboard')
+        router.push('/admin')
+      } else {
+        // Redirect regular user to home page
+        console.log('Redirecting to homepage')
+        router.push('/')
       }
       
     } catch (err) {
-      console.error('Error in sign-in process:', err);
-      setError(err.message || 'An error occurred during sign-in. Please try again.');
+      console.error('Error in sign-in process:', err)
+      setError(err.message || 'An error occurred during sign-in. Please try again.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
   const resendVerificationEmail = async () => {
-    if (!unverifiedEmail) return;
+    if (!unverifiedEmail) return
     
-    setResendLoading(true);
-    setError(null);
+    setResendLoading(true)
+    setError(null)
     try {
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: unverifiedEmail
-      });
-      if (error) throw error;
-      setSuccess(`Verification email resent to ${unverifiedEmail}. Please check your inbox.`);
+      })
+      if (error) throw error
+      setSuccess(`Verification email resent to ${unverifiedEmail}. Please check your inbox.`)
     } catch (err) {
       console.error('Error resending verification email:', err)
-      setError(err.message)    } finally {
+      setError(err.message)
+    } finally {
       setResendLoading(false)
     }
-  };
-  
+  }
   const signUpWithEmail = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -136,11 +122,11 @@ function Login() {
       }
       
       console.log('Attempting to sign up with:', email)
-        // Check if user might be an admin (for future reference)
-      const isAdminEmail = email.toLowerCase().includes('admin') || 
-                          email.toLowerCase().includes('gracecoe.org');
       
-      // Use signUp with auto-confirmation enabled
+      // Check if user might be an admin (for future reference)
+      const isAdminEmail = email.toLowerCase().includes('admin') || 
+                          email.toLowerCase().includes('gracecoe.org')
+      
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -148,20 +134,22 @@ function Login() {
           data: {
             name,
             is_admin: isAdminEmail // Set admin flag based on email domain
-          },
-          emailRedirectTo: window.location.origin
-        }      });
-      
-      if (error) {
-        console.error('Sign-up error:', error);
-        setError(error.message);
-        setLoading(false);
-        return;
+          }
+        }
+      })
+        if (error) {
+        console.error('Sign-up error:', error)
+        setError(error.message)
+        setLoading(false)
+        return
       }
       
       // Store user in database if sign-up was successful
       if (data?.user) {
-        // We already have the isAdminEmail from earlier, reuse it
+        // Check if user might be an admin (for database record)
+        const isAdminEmail = email.toLowerCase().includes('admin') || 
+                            email.toLowerCase().includes('gracecoe.org')
+        
         console.log('Creating user record in database')
         
         const { error: dbError } = await supabase
@@ -172,66 +160,30 @@ function Login() {
               name,
               is_admin: isAdminEmail, // Set admin flag based on email domain
               created_at: new Date().toISOString()
-            }          ]);
+            }
+          ])
         
         if (dbError) {
-          console.error('Error storing user data:', dbError);
-        }
-        
-        // Try auto sign-in after successful registration
-        try {
-          console.log('Attempting automatic sign-in after registration')
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: email.trim(),
-            password          });
-          
-          if (signInError) {
-            console.error('Auto sign-in error:', signInError);
-            setSuccess('Registration successful! You can now sign in with your credentials.');
-          } else {
-            console.log('Auto sign-in successful, redirecting...');
-            
-            // Dispatch auth event for other components to sync
-            if (typeof window !== 'undefined') {
-              const authEvent = new CustomEvent('supabase-auth-update', {
-                detail: { 
-                  action: 'signed_in', 
-                  source: 'auth_page',
-                  user: signInData.user,
-                  timestamp: new Date().getTime()
-                }
-              });
-              window.dispatchEvent(authEvent);
-            }
-            
-            // Redirect based on user type
-            if (isAdminEmail) {
-              router.push('/admin');
-            } else {
-              router.push('/');
-            }
-            return;
-          }        } catch (autoSignInErr) {
-          console.error('Error in auto sign-in:', autoSignInErr);
+          console.error('Error storing user data:', dbError)
         }
       }
       
-      setSuccess('Registration successful! You can now sign in with your credentials.');
+      setSuccess('Registration successful! Please check your email to verify your account.')
       
-      setEmail('');
-      setPassword('');
-      setName('');
+      setEmail('')
+      setPassword('')
+      setName('')
     } catch (err) {
-      console.error('Error signing up:', err);
-      setError(err.message);
+      console.error('Error signing up:', err)
+      setError(err.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
   
   const switchToSignUp = () => {
-    setActiveTab("signup");
-    setError(null);
+    setActiveTab("signup")
+    setError(null)
     setSuccess(null)
     setUnverifiedEmail(null)
   }

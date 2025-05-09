@@ -2,8 +2,9 @@
 
 import { UserDetailContext } from '@/context/UserDetailContext';
 import { supabase } from '@/services/supabaseClient';
+import { isAdmin, redirectBasedOnAuth, ADMIN_EMAILS } from '@/lib/admin';
 import React, { useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 function Provider({ children }) {
   const [user, setUser] = useState(null);
@@ -91,14 +92,7 @@ function Provider({ children }) {
     console.log('Processing user:', authUser.email);
       
     try {
-      // Get admin emails for direct comparison
-      const ADMIN_EMAILS = [
-        '950321104040@gracecoe.org', 
-        'principal@gracecoe.org',
-        'placement.officer@gracecoe.org',
-        'dean@gracecoe.org',
-        'tech.admin@gracecoe.org'
-      ];
+      // Using the centralized admin emails list from lib/admin.js
       
       // Check if this is an admin by email
       const isAdminUser = ADMIN_EMAILS.includes(authUser.email.toLowerCase());

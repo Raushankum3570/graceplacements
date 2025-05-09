@@ -7,9 +7,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { UserDetailContext } from '@/context/UserDetailContext';
 import { supabase } from '@/services/supabaseClient';
+import { getSessionAndUser } from './NavbarAuth';
 
-export default function Navbar() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+export default function Navbar() {  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -54,32 +54,45 @@ export default function Navbar() {
     };    // Listen for custom auth update events
     const handleAuthUpdate = (event) => {
       console.log('Navbar received auth update event', event.detail);
-      // Force a refresh of session data and user context
+      // Use our helper to safely refresh session data
       const refreshUserSession = async () => {
         try {
-          // Get current session
-          const { data } = await supabase.auth.getSession();
+          const { user: fetchedUser } = await getSessionAndUser();
           
-          if (data?.session?.user) {
-            console.log('Session exists in navbar update handler');
+          if (fetchedUser) {
+            console.log('Navbar refreshed user data successfully');
             
-            // Fetch user data from Supabase
-            const { data: userData, error } = await supabase
-              .from('Users')
-              .select('*')
-              .eq('email', data.session.user.email)
-              .single();
-              
-            if (userData && !error) {
-              console.log('Navbar found user data:', userData.name || userData.email);
-              // Update user in context directly from Navbar
-              setUser(userData);
-            } else if (error) {
-              console.error('Error fetching user in Navbar:', error);
+            // Check if the user is an admin and redirect if necessary
+            if (fetchedUser.is_admin) {
+              console.log('Admin user detected in navbar');
+              // If on regular auth page, redirect to admin
+              if (pathname === '/auth') {
+                router.push('/admin');
+                return;
+              }
+            } else {
+              // Regular user - if on admin pages, redirect to home
+              if (pathname.startsWith('/admin')) {
+                console.log('Regular user on admin page, redirecting to home');
+                router.push('/');
+                return;
+              }
+            }
+            
+            setUser(fetchedUser);
+          } else {
+            console.log('No user found in session, clearing user context');
+            setUser(null);
+            
+            // If on protected page and no user, redirect to auth
+            if (pathname.startsWith('/admin') || pathname === '/internships' || 
+                pathname === '/placements' || pathname === '/about' || pathname === '/contact') {
+              router.push('/auth');
             }
           }
         } catch (err) {
-          console.error('Error refreshing user in Navbar:', err);
+          console.error('Safe error handling in Navbar refresh:', err);
+          // Don't clear user on error to prevent flickering if it's just a temporary issue
         }
       };
       refreshUserSession();
@@ -92,32 +105,25 @@ export default function Navbar() {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('supabase-auth-update', handleAuthUpdate);
     };  }, [isProfileMenuOpen]);
-  
-  // Initialize auth state and setup direct auth listener
+    // Initialize auth state and setup direct auth listener
   useEffect(() => {
     const checkAuthState = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
-        if (data?.session?.user) {
+        // Use the safer helper function to get session and user
+        const { user: fetchedUser } = await getSessionAndUser();
+        
+        if (fetchedUser) {
           console.log('Navbar detected active session on init');
           
-          // Check if we have user in context already
-          if (!user) {
-            // Try to fetch user data
-            const { data: userData, error } = await supabase
-              .from('Users')
-              .select('*')
-              .eq('email', data.session.user.email)
-              .single();
-              
-            if (userData && !error) {
-              console.log('Navbar found user data on init:', userData.name);
-              setUser(userData);
-            }
+          // Only update if we don't have a user or if the email has changed
+          if (!user || user.email !== fetchedUser.email) {
+            console.log('Setting user in navbar:', fetchedUser.name || fetchedUser.email);
+            setUser(fetchedUser);
           }
         }
       } catch (error) {
-        console.error('Error checking auth state:', error.message);
+        console.error('Error in safe auth check:', error.message);
+        // Don't clear user on error
       }
     };
     
@@ -438,8 +444,7 @@ export default function Navbar() {
                 </button>
               </>
             )}
-          </div>
-        </div>
+          </div>      </div>
       </motion.div>
     </nav>
   );

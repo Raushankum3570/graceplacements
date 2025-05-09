@@ -487,13 +487,13 @@ function HomePage() {
                 <li><Link href="#" className="text-gray-600 hover:text-blue-600">Skill Development</Link></li>
               </ul>
             </div>
-            
-            <div>
+              <div>
               <h3 className="font-semibold text-lg mb-4">Contact</h3>
               <ul className="space-y-2">
                 <li className="text-gray-600">info@graceplacement.com</li>
                 <li className="text-gray-600">+1 (555) 123-4567</li>
                 <li className="text-gray-600">123 Placement Street, Career City</li>
+                <li><Link href="/admin-auth" className="text-blue-600 hover:underline text-sm">Administrator Login</Link></li>
               </ul>
             </div>
           </div>
