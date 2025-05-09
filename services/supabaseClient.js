@@ -53,9 +53,8 @@ export const supabase = createClient(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: true,
-      // Always use PKCE flow for better security
-      flowType: 'pkce',
+      detectSessionInUrl: true,      // Use implicit flow instead of PKCE to avoid redirect issues
+      flowType: 'implicit',
       storageKey: 'grace_placement_auth',
       // Enable debug mode for development only
       debug: process.env.NODE_ENV !== 'production',

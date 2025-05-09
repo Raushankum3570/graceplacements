@@ -276,8 +276,7 @@ export default function Navbar() {
                       <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
                         Signed in as <span className="font-medium text-blue-600">{user.email}</span>
                       </div>
-                      
-                      {user.isAdmin && (
+                        {(user.is_admin || user.is_admin_computed) && (
                         <Link 
                           href="/admin" 
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -398,8 +397,7 @@ export default function Navbar() {
                     {user.email ? user.email.split('@')[0] : "User"}
                   </span>
                 </div>
-                
-                {user.isAdmin && (
+                  {(user.is_admin || user.is_admin_computed) && (
                   <Link 
                     href="/admin" 
                     className="flex items-center px-3 py-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100"

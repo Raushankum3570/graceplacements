@@ -32,7 +32,8 @@ function HomePage() {
             const cleanUrl = window.location.pathname
             window.history.replaceState({}, document.title, cleanUrl)
             console.log('URL cleaned, removed code parameter')
-          }          // Process the auth code and establish a session
+          }
+            // Process the auth code and establish a session
           const { data, error } = await supabase.auth.getSession()
           
           if (error) {
@@ -42,17 +43,9 @@ function HomePage() {
             // If we have a session, ensure the user data is properly loaded
             if (data.session) {
               console.log('Session established after auth code exchange')
-              // Force session update in the provider context with rich event data
-              const event = new CustomEvent('supabase-auth-update', {
-                detail: {
-                  action: 'oauth_callback',
-                  source: 'page.js',
-                  user: data.session.user,
-                  timestamp: new Date().getTime()
-                }
-              })
+              // Force session update in the provider context
+              const event = new Event('supabase-auth-update')
               window.dispatchEvent(event)
-              console.log('Auth update event dispatched from homepage')
             }
           }
         } else if (errorParam) {
@@ -71,23 +64,11 @@ function HomePage() {
       }
     }    
     initAuth()
-      // Listen for auth state changes and broadcast to components
+    
+    // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         console.log('Auth state changed: signed in')
-        // Broadcast event to all components
-        if (typeof window !== 'undefined') {
-          const authEvent = new CustomEvent('supabase-auth-update', {
-            detail: { 
-              action: 'signed_in',
-              source: 'page.js_listener',
-              user: session?.user,
-              timestamp: new Date().getTime()
-            }
-          })
-          window.dispatchEvent(authEvent)
-          console.log('Auth update event broadcasted from page.js')
-        }
         // Stay on homepage after sign-in - no redirects
       } else if (event === 'SIGNED_OUT') {
         console.log('Auth state changed: signed out')
