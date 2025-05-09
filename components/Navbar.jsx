@@ -51,16 +51,35 @@ export default function Navbar() {
       if (isProfileMenuOpen && !event.target.closest('#profile-dropdown')) {
         setIsProfileMenuOpen(false);
       }
-    };
-
-    // Listen for custom auth update events
-    const handleAuthUpdate = () => {
-      console.log('Navbar received auth update event');
-      // Force a refresh of session data
+    };    // Listen for custom auth update events
+    const handleAuthUpdate = (event) => {
+      console.log('Navbar received auth update event', event.detail);
+      // Force a refresh of session data and user context
       const refreshUserSession = async () => {
-        const { data } = await supabase.auth.getSession();
-        if (data?.session?.user) {
-          console.log('Session exists in navbar update handler');
+        try {
+          // Get current session
+          const { data } = await supabase.auth.getSession();
+          
+          if (data?.session?.user) {
+            console.log('Session exists in navbar update handler');
+            
+            // Fetch user data from Supabase
+            const { data: userData, error } = await supabase
+              .from('Users')
+              .select('*')
+              .eq('email', data.session.user.email)
+              .single();
+              
+            if (userData && !error) {
+              console.log('Navbar found user data:', userData.name || userData.email);
+              // Update user in context directly from Navbar
+              setUser(userData);
+            } else if (error) {
+              console.error('Error fetching user in Navbar:', error);
+            }
+          }
+        } catch (err) {
+          console.error('Error refreshing user in Navbar:', err);
         }
       };
       refreshUserSession();
@@ -72,8 +91,54 @@ export default function Navbar() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('supabase-auth-update', handleAuthUpdate);
+    };  }, [isProfileMenuOpen]);
+  
+  // Initialize auth state and setup direct auth listener
+  useEffect(() => {
+    const checkAuthState = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.user) {
+          console.log('Navbar detected active session on init');
+          
+          // Check if we have user in context already
+          if (!user) {
+            // Try to fetch user data
+            const { data: userData, error } = await supabase
+              .from('Users')
+              .select('*')
+              .eq('email', data.session.user.email)
+              .single();
+              
+            if (userData && !error) {
+              console.log('Navbar found user data on init:', userData.name);
+              setUser(userData);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking auth state:', error.message);
+      }
     };
-  }, [isProfileMenuOpen]);
+    
+    checkAuthState();
+    
+    // Set up an auth subscription directly in the navbar
+    const { data: authSubscription } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          console.log('Navbar detected sign-in directly');
+          checkAuthState();
+        }
+      }
+    );
+    
+    return () => {
+      if (authSubscription?.subscription?.unsubscribe) {
+        authSubscription.subscription.unsubscribe();
+      }
+    };
+  }, [user, setUser]);
 
   // Handle sign out
   const handleSignOut = async () => {

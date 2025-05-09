@@ -17,10 +17,20 @@ function Provider({ children }) {
       try {
         // Listen for auth state changes
         const { data: authListener } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            console.log('Auth event:', event);            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          async (event, session) => {            console.log('Auth event:', event);            
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
               console.log('Processing sign-in event with user data');
               await createOrFetchUser(session?.user);
+              
+              // Broadcast auth update event to all components
+              if (typeof window !== 'undefined') {
+                const authEvent = new CustomEvent('supabase-auth-update', { 
+                  detail: { action: 'signed_in', timestamp: new Date().getTime() } 
+                });
+                window.dispatchEvent(authEvent);
+                console.log('Auth update event dispatched from provider');
+              }
+              
               // Stay on current page after sign-in - no redirects from homepage
               const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
               console.log('Current path after sign-in:', currentPath);
@@ -152,11 +162,19 @@ function Provider({ children }) {
           console.error("Data insertion error:", error.message);
           setError(error.message);
         } else {
-          console.log('New User created:', data);
-          // Add the admin flag to the user object in memory
+          console.log('New User created:', data);          // Add the admin flag to the user object in memory
           const newUser = data[0];
           newUser.is_admin_computed = finalAdminStatus;
           setUser(newUser);
+          
+          // Broadcast user update for navbar and other components
+          if (typeof window !== 'undefined') {
+            const userUpdateEvent = new CustomEvent('supabase-auth-update', { 
+              detail: { action: 'user_created', user: newUser, timestamp: new Date().getTime() } 
+            });
+            window.dispatchEvent(userUpdateEvent);
+            console.log('User creation event dispatched');
+          }
         }
       } else {
         // User exists, update admin status if needed
@@ -174,10 +192,18 @@ function Provider({ children }) {
             console.error("Failed to update admin status:", err);
           }
         }
-        
-        // User exists, add computed admin status to the object
+          // User exists, add computed admin status to the object
         existingUser.is_admin_computed = finalAdminStatus;
         setUser(existingUser);
+        
+        // Broadcast existing user update for navbar and other components
+        if (typeof window !== 'undefined') {
+          const userUpdateEvent = new CustomEvent('supabase-auth-update', { 
+            detail: { action: 'user_fetched', user: existingUser, timestamp: new Date().getTime() } 
+          });
+          window.dispatchEvent(userUpdateEvent);
+          console.log('Existing user update event dispatched');
+        }
       }
     } catch (error) {
       console.error("Error processing user:", error.message);

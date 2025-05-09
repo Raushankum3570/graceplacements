@@ -20,7 +20,6 @@ const getSiteUrl = () => {
     console.log('Using environment-provided site URL:', siteUrl);
     return siteUrl;
   }
-
   // In browser context, use the current origin to ensure consistency
   if (typeof window !== 'undefined') {
     const origin = window.location.origin;
@@ -29,16 +28,17 @@ const getSiteUrl = () => {
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       console.log(`Using exact local URL: ${origin}`);
+      return origin;
     } else {
-      console.log(`Using production URL: ${origin}`);
+      // For production deployment, hardcode the vercel URL
+      const productionUrl = 'https://graceplacement-two.vercel.app';
+      console.log(`Using production URL: ${productionUrl} (instead of ${origin})`);
+      return productionUrl;
     }
-    
-    return origin;
   }
-  
-  // Fallback for server-side rendering when no window is available
+    // Fallback for server-side rendering when no window is available
   const fallbackUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://grace-placement.vercel.app' 
+    ? 'https://graceplacement-two.vercel.app' 
     : 'http://localhost:3000';
   
   console.log(`Using fallback URL (server context): ${fallbackUrl}`);
