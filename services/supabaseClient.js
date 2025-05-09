@@ -53,8 +53,9 @@ export const supabase = createClient(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: true,      // Use implicit flow instead of PKCE to avoid redirect issues
-      flowType: 'implicit',
+      detectSessionInUrl: true,
+      // Always use PKCE flow for better security
+      flowType: 'pkce',
       storageKey: 'grace_placement_auth',
       // Enable debug mode for development only
       debug: process.env.NODE_ENV !== 'production',
@@ -96,6 +97,8 @@ export const supabase = createClient(
         },
       },      // Set a global redirect URL for all auth operations
       redirectTo: getSiteUrl(),
+      // Handle PKCE flow issues between production and development
+      flowType: 'implicit',
       // Add cookie options for better cross-domain handling
       cookieOptions: {
         name: 'sb-auth-token',
