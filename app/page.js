@@ -33,19 +33,19 @@ function HomePage() {
             window.history.replaceState({}, document.title, cleanUrl)
             console.log('URL cleaned, removed code parameter')
           }
-            // Process the auth code and establish a session
+          
+          // Process the auth code and establish a session
           const { data, error } = await supabase.auth.getSession()
           
           if (error) {
             console.error('Error getting session:', error.message)
           } else {
             console.log('Session check complete:', data.session ? 'Active session' : 'No session')
-            // If we have a session, ensure the user data is properly loaded
+              // If we have a session, wait briefly for context to update
+            // This ensures user data is loaded before continuing
             if (data.session) {
-              console.log('Session established after auth code exchange')
-              // Force session update in the provider context
-              const event = new Event('supabase-auth-update')
-              window.dispatchEvent(event)
+              console.log('Session established after auth code')
+              // No need to redirect - we're already on the homepage
             }
           }
         } else if (errorParam) {
@@ -62,33 +62,18 @@ function HomePage() {
         // Always mark auth as initialized to avoid any loading states
         setAuthInitialized(true)
       }
-    }    
+    }
+    
     initAuth()
     
     // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         console.log('Auth state changed: signed in')
-        // Stay on homepage after sign-in - no redirects
       } else if (event === 'SIGNED_OUT') {
         console.log('Auth state changed: signed out')
       }
     })
-    
-    // Listen for custom auth update event
-    if (typeof window !== 'undefined') {
-      const handleAuthUpdate = () => {
-        console.log('Auth update event received')
-      }
-      window.addEventListener('supabase-auth-update', handleAuthUpdate)
-      
-      return () => {
-        window.removeEventListener('supabase-auth-update', handleAuthUpdate)
-        if (authListener?.subscription?.unsubscribe) {
-          authListener.subscription.unsubscribe()
-        }
-      }
-    }
     
     return () => {
       if (authListener?.subscription?.unsubscribe) {
