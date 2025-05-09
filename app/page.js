@@ -41,13 +41,11 @@ function HomePage() {
             console.error('Error getting session:', error.message)
           } else {
             console.log('Session check complete:', data.session ? 'Active session' : 'No session')
-            
-            // If we have a session, wait briefly for context to update
+              // If we have a session, wait briefly for context to update
             // This ensures user data is loaded before continuing
             if (data.session) {
-              setTimeout(() => {
-                console.log('Auth code processing complete')
-              }, 500)
+              console.log('Session established after auth code')
+              // No need to redirect - we're already on the homepage
             }
           }
         } else if (errorParam) {

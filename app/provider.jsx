@@ -15,21 +15,17 @@ function Provider({ children }) {
     // Check for an existing session first
     const initializeAuth = async () => {
       try {
-        // Listen for auth state changes        const { data: authListener } = supabase.auth.onAuthStateChange(
+        // Listen for auth state changes
+        const { data: authListener } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             console.log('Auth event:', event);
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
               console.log('Processing sign-in event with user data');
               await createOrFetchUser(session?.user);
-              // Stay on current page after sign-in instead of redirecting
             } else if (event === 'SIGNED_OUT') {
               console.log('User signed out');
               setUser(null);
-              // Only redirect to auth if not on homepage
-              const currentPath = window.location.pathname;
-              if (currentPath !== '/' && currentPath !== '') {
-                router.push('/auth');
-              }
+              router.push('/auth');
             } else if (event === 'USER_UPDATED') {
               // Handle user profile updates if needed
               console.log('User data updated');
@@ -65,9 +61,13 @@ function Provider({ children }) {
     
     initializeAuth();
   }, [router]);
+      const createOrFetchUser = async (authUser) => {
+    if (!authUser) {
+      console.log('No auth user provided');
+      return;
+    }
     
-  const createOrFetchUser = async (authUser) => {
-    if (!authUser) return;
+    console.log('Processing user:', authUser.email);
       
     try {
       // Get admin emails for direct comparison
@@ -81,9 +81,13 @@ function Provider({ children }) {
       
       // Check if this is an admin by email
       const isAdminUser = ADMIN_EMAILS.includes(authUser.email.toLowerCase());
+      console.log('Admin by email?', isAdminUser);
       
       // Check for admin status in user metadata
-      const isAdminInMetadata = authUser.user_metadata?.is_admin === true;      // First check if user exists in our Users table
+      const isAdminInMetadata = authUser.user_metadata?.is_admin === true;
+      console.log('Admin in metadata?', isAdminInMetadata);
+      
+      // First check if user exists in our Users table
       const { data: existingUsers, error: fetchError } = await supabase
         .from('Users')
         .select('*')
