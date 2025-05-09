@@ -106,16 +106,15 @@ export default function AuthConfig() {
                     <a href="https://app.supabase.io" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
                       https://app.supabase.io
                     </a>
-                  </li>
-                  <li>Select your project</li>
-                  <li>Navigate to "Authentication" → "Providers" in the left sidebar</li>
-                  <li>Find "Email" under the list of providers</li>
-                  <li>Make sure "Email" is enabled (toggle switch should be ON)</li>
-                  <li>Enable "Email/Password Sign Up"</li>
-                  <li>Navigate to "Authentication" → "URL Configuration"</li>
-                  <li>Under "Site URL", make sure your domain is correctly set</li>
-                  <li><strong className="text-red-600">Important:</strong> Go to "Authentication" → "Settings"</li>
-                  <li>Under "User Sign-ups", make sure "Enable Sign-ups" is TURNED ON</li>
+                  </li>                  <li>Select your project</li>
+                  <li>Navigate to &quot;Authentication&quot; → &quot;Providers&quot; in the left sidebar</li>
+                  <li>Find &quot;Email&quot; under the list of providers</li>
+                  <li>Make sure &quot;Email&quot; is enabled (toggle switch should be ON)</li>
+                  <li>Enable &quot;Email/Password Sign Up&quot;</li>
+                  <li>Navigate to &quot;Authentication&quot; → &quot;URL Configuration&quot;</li>
+                  <li>Under &quot;Site URL&quot;, make sure your domain is correctly set</li>
+                  <li><strong className="text-red-600">Important:</strong> Go to &quot;Authentication&quot; → &quot;Settings&quot;</li>
+                  <li>Under &quot;User Sign-ups&quot;, make sure &quot;Enable Sign-ups&quot; is TURNED ON</li>
                   <li>Save all your changes</li>
                 </ol>
               </div>
