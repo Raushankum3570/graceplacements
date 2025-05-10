@@ -69,7 +69,7 @@ export default function PlacementsPage() {
 
   function resetForm() {
     setFormData({
-      student_name: '',
+     
       company_name: '',
       position: '',
       package: '',
@@ -118,7 +118,7 @@ export default function PlacementsPage() {
 
   function handleEdit(placement) {
     setFormData({
-      student_name: placement.student_name || '',
+      
       company_name: placement.company_name || '',
       position: placement.position || '',
       package: placement.package || '',
