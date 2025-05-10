@@ -10,7 +10,7 @@ import { supabase } from '@/services/supabaseClient'
 import { useUser } from '../provider'
 import { isAdmin } from '@/lib/admin'
 
-// This page manages student placement records with real-time database integration
+// This page manages company placement records with real-time database integration
 // When users update or delete records, changes are immediately synchronized with Supabase:
 // - Updates: When you edit a placement record, changes are permanently saved to the database
 // - Deletes: When you delete a record, it is permanently removed from the database after confirmation
@@ -182,11 +182,10 @@ export default function PlacementsPage() {
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white mb-8 p-8">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative z-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-extrabold mb-2">Student Placements</h1>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">            <div>
+              <h1 className="text-3xl md:text-4xl font-extrabold mb-2">Company Placements</h1>
               <p className="text-blue-100 max-w-xl">
-                Browse student placement records and celebrate career success stories.
+                Browse company placement records and celebrate career opportunities.
               </p>
             </div>
             {userIsAdmin && (
@@ -440,10 +439,9 @@ export default function PlacementsPage() {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <h3 className="mt-4 text-xl font-medium text-gray-900">No placements found</h3>
-          <p className="mt-2 text-gray-500 max-w-md mx-auto">
+          <h3 className="mt-4 text-xl font-medium text-gray-900">No placements found</h3>          <p className="mt-2 text-gray-500 max-w-md mx-auto">
             {userIsAdmin 
-              ? "Start by adding placement records for students to showcase their career achievements."
+              ? "Start by adding placement records for companies to showcase career opportunities."
               : "No placement records are available at the moment. Check back later!"}
           </p>
           {userIsAdmin && (
