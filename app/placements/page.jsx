@@ -25,10 +25,8 @@ export default function PlacementsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const { user } = useUser()
   const userIsAdmin = user ? isAdmin(user) : false
-  
-  // Form state
+    // Form state
   const [formData, setFormData] = useState({
-   
     company_name: '',
     position: '',
     package: '',
@@ -66,10 +64,8 @@ export default function PlacementsPage() {
     const { name, value } = e.target
     setFormData({ ...formData, [name]: value })
   }
-
   function resetForm() {
     setFormData({
-     
       company_name: '',
       position: '',
       package: '',
@@ -115,10 +111,8 @@ export default function PlacementsPage() {
       setLoading(false)
     }
   }
-
   function handleEdit(placement) {
     setFormData({
-      
       company_name: placement.company_name || '',
       position: placement.position || '',
       package: placement.package || '',
@@ -156,11 +150,9 @@ export default function PlacementsPage() {
       setLoading(false)
     }
   }
-  
-  // Filter placements based on search query and active tab
+    // Filter placements based on search query and active tab
   const filteredPlacements = placements.filter(placement => {
     const matchesSearch = searchQuery === '' || 
-   
       placement.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       placement.position?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       placement.branch?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -261,22 +253,7 @@ export default function PlacementsPage() {
             <CardDescription>Enter the placement details below</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
-            <CardContent className="grid gap-6 pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label htmlFor="student_name" className="text-sm font-medium">
-                    Student Name
-                  </label>
-                  <Input
-                    id="student_name"
-                    name="student_name"
-                    value={formData.student_name}
-                    onChange={handleInputChange}
-                    className="focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter student name"
-                    required
-                  />
-                </div>
+            <CardContent className="grid gap-6 pt-6">              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                 <div className="space-y-2">
                   <label htmlFor="company_name" className="text-sm font-medium">
                     Company Name
@@ -502,16 +479,15 @@ export default function PlacementsPage() {
             <Card 
               key={placement.id} 
               className="h-full flex flex-col overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100"
-            >
-              <CardHeader className="relative pb-2">
+            >              <CardHeader className="relative pb-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-xl font-bold line-clamp-1">{placement.student_name}</CardTitle>
+                    <CardTitle className="text-xl font-bold line-clamp-1">{placement.company_name}</CardTitle>
                     <CardDescription className="mt-1 flex items-center text-blue-600">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                      <span className="font-medium">{placement.company_name}</span>
+                      <span className="font-medium">{placement.position}</span>
                     </CardDescription>
                   </div>
                   {userIsAdmin && (
