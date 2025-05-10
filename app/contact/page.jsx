@@ -151,7 +151,7 @@ function ContactPage() {
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">Get in Touch</h1>
         <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
-          Have questions about placements or internships? We're here to help you connect with the right people.
+          Have questions about placements or internships? We&apos;re here to help you connect with the right people.
         </p>
       </div>
 
@@ -160,7 +160,7 @@ function ContactPage() {
         <Card className="lg:col-span-2 shadow-lg border-0">
           <CardHeader>
             <CardTitle className="text-2xl">Send us a Message</CardTitle>
-            <CardDescription>Fill out the form below and we'll get back to you as soon as possible.</CardDescription>
+            <CardDescription>Fill out the form below and we&apos;ll get back to you as soon as possible.</CardDescription>
           </CardHeader>
           
           <form onSubmit={handleSubmit}>
@@ -219,7 +219,7 @@ function ContactPage() {
               
               {submitSuccess && (
                 <div className="p-3 bg-green-50 text-green-700 border border-green-200 rounded-md">
-                  Your message has been sent successfully! We'll get back to you soon.
+                  Your message has been sent successfully! We&apos;ll get back to you soon.
                 </div>
               )}
               {error && (

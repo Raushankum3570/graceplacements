@@ -290,9 +290,8 @@ function Login() {
                   >
                     {loading ? 'Signing in...' : 'Sign In'}
                   </Button>
-                  
-                  <p className="text-sm text-center text-gray-500 mt-4">
-                    Don't have an account?{" "}
+                    <p className="text-sm text-center text-gray-500 mt-4">
+                    Don&apos;t have an account?{" "}
                     <button 
                       type="button"
                       onClick={switchToSignUp} 

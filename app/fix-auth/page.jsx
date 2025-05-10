@@ -24,19 +24,19 @@ export default function FixAuthenticationPage() {
         
         <Alert variant="destructive" className="mb-4">
           <AlertDescription>
-            <span className="font-bold">Database error: relation 'public.Users' does not exist!</span> The Users table is missing in your Supabase database.
+            <span className="font-bold">Database error: relation &apos;public.Users&apos; does not exist!</span> The Users table is missing in your Supabase database.
           </AlertDescription>
         </Alert>
         
         <Alert className="mb-6">
           <AlertDescription>
-            Based on the error message "Email logins are disabled", you need to enable email authentication in your Supabase dashboard.
+            Based on the error message &quot;Email logins are disabled&quot;, you need to enable email authentication in your Supabase dashboard.
           </AlertDescription>
         </Alert>
         
         <div className="space-y-6">
           <div className="border-l-4 border-blue-500 pl-4 py-2">
-            <h3 className="font-bold mb-2">Here's how to fix your authentication problems:</h3>
+            <h3 className="font-bold mb-2">Here&apos;s how to fix your authentication problems:</h3>
             <ol className="list-decimal list-inside space-y-2">
               <li>First, fix the missing Users table issue with the database configuration tool</li>
               <li>Next, make sure email logins are enabled in Supabase</li>
@@ -50,7 +50,7 @@ export default function FixAuthenticationPage() {
             </Link>
             
             <Link href="/auth-config">
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">Fix "Email logins are disabled"</Button>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">Fix &quot;Email logins are disabled&quot;</Button>
             </Link>
             
             <Link href="/create-user">
