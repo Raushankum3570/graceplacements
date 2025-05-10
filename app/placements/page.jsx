@@ -28,7 +28,7 @@ export default function PlacementsPage() {
   
   // Form state
   const [formData, setFormData] = useState({
-    student_name: '',
+   
     company_name: '',
     position: '',
     package: '',
@@ -160,7 +160,7 @@ export default function PlacementsPage() {
   // Filter placements based on search query and active tab
   const filteredPlacements = placements.filter(placement => {
     const matchesSearch = searchQuery === '' || 
-      placement.student_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+   
       placement.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       placement.position?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       placement.branch?.toLowerCase().includes(searchQuery.toLowerCase())
