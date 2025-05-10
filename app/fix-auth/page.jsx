@@ -79,7 +79,7 @@ export default function FixAuthenticationPage() {
           <div>
             <h3 className="font-bold">1. Invalid Login Credentials</h3>
             <p className="text-gray-600">
-              This occurs when either the email doesn't exist in the authentication system
+              This occurs when either the email doesn&apos;t exist in the authentication system
               or the password is incorrect. You can verify this with the auth test tool.
             </p>
           </div>
@@ -102,8 +102,7 @@ export default function FixAuthenticationPage() {
           
           <div>
             <h3 className="font-bold">4. Database Connection Issues</h3>
-            <p className="text-gray-600">
-              If there's a problem connecting to the database, you might be able to authenticate
+            <p className="text-gray-600">              If there&apos;s a problem connecting to the database, you might be able to authenticate
               but not store user profiles. The Auth Test tool will help diagnose this.
             </p>
           </div>

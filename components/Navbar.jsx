@@ -100,12 +100,13 @@ export default function Navbar() {  const [isMobileMenuOpen, setIsMobileMenuOpen
 
     document.addEventListener('mousedown', handleClickOutside);
     window.addEventListener('supabase-auth-update', handleAuthUpdate);
-    
-    return () => {
+      return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('supabase-auth-update', handleAuthUpdate);
-    };  }, [isProfileMenuOpen]);
-    // Initialize auth state and setup direct auth listener
+    };
+  }, [isProfileMenuOpen, pathname, router, setUser]);
+  
+  // Initialize auth state and setup direct auth listener
   useEffect(() => {
     const checkAuthState = async () => {
       try {
@@ -143,13 +144,12 @@ export default function Navbar() {  const [isMobileMenuOpen, setIsMobileMenuOpen
         }
       }
     );
-    
-    return () => {
+      return () => {
       if (authSubscription?.subscription?.unsubscribe) {
         authSubscription.subscription.unsubscribe();
       }
     };
-  }, [user, setUser]);
+  }, [user, setUser, pathname, router]);
 
   // Handle sign out
   const handleSignOut = async () => {

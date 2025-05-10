@@ -360,7 +360,7 @@ export default function InternshipsPage() {
         <div className="text-center py-10">
           <p className="text-xl">No internships found.</p>
           {userIsAdmin && (
-            <p className="text-muted-foreground">Click 'Add Internship' to create your first listing.</p>
+            <p className="text-muted-foreground">Click &apos;Add Internship&apos; to create your first listing.</p>
           )}
         </div>
       ) : (
