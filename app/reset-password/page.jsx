@@ -17,11 +17,13 @@ export default function ResetPassword() {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [hash, setHash] = useState(null)
-
   // Extract the hash from the URL when component mounts
   useEffect(() => {
     // The hash will be in the URL after the # symbol
     if (typeof window !== 'undefined') {
+      // Log the current URL to help with debugging
+      console.log('Reset password page - current URL:', window.location.href);
+      
       // Look for either a hash parameter or type=recovery in the URL
       const hashParam = new URL(window.location.href).hash.replace('#', '');
       const urlParams = new URLSearchParams(window.location.search);
@@ -29,9 +31,9 @@ export default function ResetPassword() {
       
       if (hashParam) {
         setHash(hashParam);
-        console.log('Found hash in URL');
+        console.log('Found hash in URL:', hashParam);
       } else if (type === 'recovery') {
-        console.log('Recovery flow detected');
+        console.log('Recovery flow detected with type:', type);
       } else {
         setError('Invalid or missing reset token. Please request a new password reset link.');
       }
@@ -60,9 +62,12 @@ export default function ResetPassword() {
       if (error) throw error;
       
       setSuccess('Your password has been reset successfully!');
-        // Wait a moment before redirecting to login with success message
+        // Wait a moment before redirecting to login with success message      // Wait a moment before redirecting to login with success message
       setTimeout(() => {
-        router.push('/auth?reset=success');
+        // Ensure we're using the correct base path for the auth page
+        const authPath = '/auth?reset=success';
+        console.log('Redirecting to:', authPath);
+        router.push(authPath);
       }, 2000);
       
     } catch (err) {

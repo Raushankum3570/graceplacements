@@ -147,18 +147,16 @@ function Login() {
     setForgotPasswordLoading(true);
     setError(null);
     setSuccess(null);
-    
-    try {
+      try {
       // Get site URL for redirects - this is crucial for making sure it works on Vercel
       let redirectUrl;
       if (typeof window !== 'undefined') {
-        // Get the base URL dynamically
-        const baseUrl = window.location.hostname.includes('localhost') 
-          ? window.location.origin 
-          : 'https://grace-placement.vercel.app';
-          
-        // Add the reset-password path
-        redirectUrl = `${baseUrl}/reset-password`;
+        // Get the current origin (works for both localhost and deployed environments)
+        const origin = window.location.origin;
+        
+        // Use the actual current origin for better reliability
+        // This ensures it works on any deployment URL including preview deployments
+        redirectUrl = `${origin}/reset-password`;
         
         console.log('Password reset redirect URL:', redirectUrl);
       } else {
@@ -204,10 +202,7 @@ function Login() {
         options: {          data: {
             name,
             is_admin: isAdminEmail // Set admin flag based on email domain
-          },
-          emailRedirectTo: typeof window !== 'undefined' ? 
-            (window.location.hostname.includes('localhost') ? window.location.origin : 'https://grace-placement.vercel.app') 
-            : 'https://grace-placement.vercel.app'
+          },          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : 'https://grace-placement.vercel.app'
         }      });
       
       if (error) {

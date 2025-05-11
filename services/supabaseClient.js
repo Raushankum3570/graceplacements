@@ -20,27 +20,19 @@ const getSiteUrl = () => {
   if (siteUrl) {
     console.log('Using environment-provided site URL:', siteUrl);
     return siteUrl;
-  }
-  // In browser context, use the current origin to ensure consistency
+  }  // In browser context, use the current origin to ensure consistency
   if (typeof window !== 'undefined') {
     const origin = window.location.origin;
-    
     // Add detailed logging for debugging
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       console.log(`Using exact local URL: ${origin}`);
       return origin;
-    } else {      // For production deployment, use current origin or explicitly set the Vercel domain
-      let productionUrl = origin;
-      
-      // If the origin doesn't contain the expected Vercel domain, use the hardcoded URL
-      if (!origin.includes('grace-placement.vercel.app')) {
-        productionUrl = 'https://grace-placement.vercel.app';
-        console.log(`Using hardcoded production URL: ${productionUrl} instead of ${origin}`);
-      } else {
-        console.log(`Using current origin as production URL: ${productionUrl}`);
-      }
-      return productionUrl;
+    } else {
+      // For production deployment, always use the current origin
+      // This ensures it works on any deployment URL including preview deployments
+      console.log(`Using current production URL: ${origin}`);
+      return origin;
     }
   }
   // Fallback for server-side rendering when no window is available
