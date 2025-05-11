@@ -25,7 +25,7 @@ export default function PlacementsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const { user } = useUser()
   const userIsAdmin = user ? isAdmin(user) : false
-    // Form state
+  // Form state
   const [formData, setFormData] = useState({
     company_name: '',
     position: '',
@@ -34,7 +34,8 @@ export default function PlacementsPage() {
     location: '',
     description: '',
     batch: '',
-    branch: ''
+    branch: '',
+    link: ''
   })
 
   // Load placements data
@@ -63,8 +64,7 @@ export default function PlacementsPage() {
   function handleInputChange(e) {
     const { name, value } = e.target
     setFormData({ ...formData, [name]: value })
-  }
-  function resetForm() {
+  }  function resetForm() {
     setFormData({
       company_name: '',
       position: '',
@@ -73,7 +73,8 @@ export default function PlacementsPage() {
       location: '',
       description: '',
       batch: '',
-      branch: ''
+      branch: '',
+      link: ''
     })
     setEditingId(null)
   }
@@ -110,8 +111,7 @@ export default function PlacementsPage() {
     } finally {
       setLoading(false)
     }
-  }
-  function handleEdit(placement) {
+  }  function handleEdit(placement) {
     setFormData({
       company_name: placement.company_name || '',
       position: placement.position || '',
@@ -120,7 +120,8 @@ export default function PlacementsPage() {
       location: placement.location || '',
       description: placement.description || '',
       batch: placement.batch || '',
-      branch: placement.branch || ''
+      branch: placement.branch || '',
+      link: placement.link || ''
     })
     setEditingId(placement.id)
     setIsFormVisible(true)
@@ -327,9 +328,7 @@ export default function PlacementsPage() {
                     placeholder="E.g. Bangalore, India"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              </div>              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label htmlFor="batch" className="text-sm font-medium">
                     Batch Year
@@ -356,6 +355,20 @@ export default function PlacementsPage() {
                     placeholder="E.g. Computer Science"
                   />
                 </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="link" className="text-sm font-medium">
+                  Company Website or Job Link
+                </label>
+                <Input
+                  id="link"
+                  name="link"
+                  value={formData.link}
+                  onChange={handleInputChange}
+                  className="focus:ring-2 focus:ring-blue-500"
+                  placeholder="E.g. https://company.com/careers"
+                />
               </div>
 
               <div className="space-y-2">
@@ -566,14 +579,20 @@ export default function PlacementsPage() {
                   </div>
                 )}
               </CardContent>
-              
-              <CardFooter className="mt-auto border-t pt-3">
-                <div className="flex items-center justify-center w-full gap-1 text-sm text-blue-600 font-medium">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Successfully Placed
-                </div>
+                <CardFooter className="mt-auto border-t pt-3">
+                {placement.link && (
+                  <a 
+                    href={placement.link}
+                    target="_blank"
+                    rel="noopener noreferrer" 
+                    className="flex items-center justify-center w-full gap-1 text-sm text-blue-600 font-medium hover:underline"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Visit Company Website
+                  </a>
+                )}
               </CardFooter>
             </Card>
           ))}
