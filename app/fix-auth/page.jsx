@@ -69,10 +69,9 @@ export default function FixAuthenticationPage() {
       {/* New Card for the auth_id column type issue */}
       <Card className="p-6 mb-6 border-2 border-yellow-300">
         <h2 className="text-2xl font-semibold mb-4">Fix Google Authentication UUID Error</h2>
-        
-        <Alert variant="destructive" className="mb-4">
+          <Alert variant="destructive" className="mb-4">
           <AlertDescription>
-            <span className="font-bold">Error with Google Auth: "invalid input syntax for type bigint/double precision: uuid-string"</span>
+            <span className="font-bold">Error with Google Auth: &ldquo;invalid input syntax for type bigint/double precision: uuid-string&rdquo;</span>
           </AlertDescription>
         </Alert>
         
@@ -80,8 +79,8 @@ export default function FixAuthenticationPage() {
           <p className="mb-2">This error occurs because the <code>auth_id</code> column in your Users table has the wrong data type:</p>
           <ul className="list-disc pl-6 mb-4">
             <li>Your database has the column as <code>bigint</code> or <code>double precision</code> type</li>
-            <li>Google authentication generates UUID strings like "ae95fbd1-172e-4d17-af00-ee27c8ac11d4"</li>
-            <li>PostgreSQL can't convert the UUID string to a number automatically</li>
+            <li>Google authentication generates UUID strings like &ldquo;ae95fbd1-172e-4d17-af00-ee27c8ac11d4&rdquo;</li>
+            <li>PostgreSQL can&apos;t convert the UUID string to a number automatically</li>
           </ul>
         </div>
         

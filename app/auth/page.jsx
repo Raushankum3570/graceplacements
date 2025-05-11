@@ -386,14 +386,13 @@ function Login() {
         }
       }
     );
-    
-    // Cleanup
+      // Cleanup
     return () => {
       if (authListener && authListener.subscription) {
         authListener.subscription.unsubscribe();
       }
     };
-  }, [router]);
+  }, [router, handleUserAfterOAuth]);
 
   const switchToSignUp = () => {
     setActiveTab("signup");

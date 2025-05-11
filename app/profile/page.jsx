@@ -218,9 +218,8 @@ export default function Profile() {
             <h3 className="text-xl font-semibold mb-6">Account Security</h3>
             
             {user.provider === 'google' ? (
-              <div className="bg-gray-50 p-4 rounded-md">
-                <p className="text-sm text-gray-600">
-                  You're signed in with Google. Password management is handled through your Google account.
+              <div className="bg-gray-50 p-4 rounded-md">                <p className="text-sm text-gray-600">
+                  You&apos;re signed in with Google. Password management is handled through your Google account.
                 </p>
               </div>
             ) : (
