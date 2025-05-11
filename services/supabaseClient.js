@@ -43,9 +43,9 @@ const getSiteUrl = () => {
       return productionUrl;
     }
   }
-    // Fallback for server-side rendering when no window is available
+  // Fallback for server-side rendering when no window is available
   const fallbackUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://graceplacement-two.vercel.app' 
+    ? 'https://grace-placement.vercel.app' 
     : 'http://localhost:3000';
   
   console.log(`Using fallback URL (server context): ${fallbackUrl}`);
