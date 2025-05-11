@@ -140,15 +140,16 @@ function Provider({ children }) {
         // Get profile picture if available
         userPicture = authUser.user_metadata?.picture || 
                      authUser.user_metadata?.avatar_url || 
-                     null;
-        
-        // Basic user data with admin flag
+                     null;        // Enhanced user data with admin flag and Google profile info
         const userData = {
           name: userName,
           email: authUser.email,
           picture: userPicture,
+          provider: authUser.app_metadata?.provider || 'email',
+          // Removed auth_id to avoid type conversion issues
           is_admin: finalAdminStatus,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          last_sign_in: new Date().toISOString()
         };
         
         // Insert new user into the Users table
@@ -174,22 +175,45 @@ function Provider({ children }) {
             window.dispatchEvent(userUpdateEvent);
             console.log('User creation event dispatched');
           }
-        }
-      } else {
-        // User exists, update admin status if needed
-        if (existingUser.is_admin !== finalAdminStatus) {
-          try {
-            const { error: updateError } = await supabase
-              .from('Users')
-              .update({ is_admin: finalAdminStatus })
-              .eq('id', existingUser.id);
+        }      } else {
+        // User exists, check if we need to update profile data from Google
+        const userPicture = authUser.user_metadata?.picture || 
+                           authUser.user_metadata?.avatar_url;
+        
+        const userName = authUser.user_metadata?.name || 
+                        authUser.user_metadata?.full_name;
+          // Update user with the latest data from Google if needed
+        try {
+          // Start with basic updates that we know will work
+          const updates = {
+            is_admin: finalAdminStatus,
+            last_sign_in: new Date().toISOString()
+          };
+          
+          // Only update name and picture if provided by Google OAuth
+          if (userName) updates.name = userName;
+          if (userPicture) updates.picture = userPicture;
+          
+          // Update provider info if missing
+          if (!existingUser.provider && authUser.app_metadata?.provider) {
+            updates.provider = authUser.app_metadata.provider;
+          }          // We're no longer updating auth_id to avoid type conversion issues
+          console.log('Skipping auth_id update to avoid type conversion issues');
+          
+          const { error: updateError } = await supabase
+            .from('Users')
+            .update(updates)
+            .eq('id', existingUser.id);
               
-            if (updateError && !updateError.message.includes('column "is_admin" does not exist')) {
-              console.error("Error updating admin status:", updateError.message);
-            }
-          } catch (err) {
-            console.error("Failed to update admin status:", err);
+          if (updateError) {
+            console.error("Error updating user profile:", updateError.message);
+          } else {
+            // Update local user object with the latest data
+            Object.assign(existingUser, updates);
+            console.log('Updated user profile with latest Google data');
           }
+        } catch (err) {
+          console.error("Failed to update user profile:", err);
         }
           // User exists, add computed admin status to the object
         existingUser.is_admin_computed = finalAdminStatus;

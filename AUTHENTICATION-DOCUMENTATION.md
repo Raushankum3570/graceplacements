@@ -15,8 +15,8 @@ The Grace Placement Management System uses a dual authentication system:
 
 - Located at `/auth` route
 - Features:
-  - Email/password sign-up and sign-in only
-  - No Google OAuth or other social sign-in methods
+  - Email/password sign-up and sign-in
+  - **New: Google OAuth authentication** - seamless sign-in with Google accounts
   - **Works for ALL email addresses**, including admin emails
   - Normal users marked as non-admin (`is_admin: false`)
   - Admin emails are automatically recognized and granted admin privileges when they sign up or sign in

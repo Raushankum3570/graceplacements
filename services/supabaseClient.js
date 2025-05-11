@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const skipEmailVerification = true; // Set to true to allow immediate sign-in without verification
 
 // Add some validation to help with debugging
@@ -12,6 +13,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
     url: supabaseUrl ? 'Defined' : 'Missing', 
     key: supabaseAnonKey ? 'Defined' : 'Missing' 
   });
+}
+
+// Validate Google Client ID when using Google auth
+if (!googleClientId) {
+  console.warn('Missing Google Client ID environment variable! Google authentication may not work.');
 }
 
 // Determine site URL for redirects (works in both client and server components)

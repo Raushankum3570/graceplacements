@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/services/supabaseClient';
 
 export default function AuthDebugger() {
@@ -16,9 +17,54 @@ export default function AuthDebugger() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [envStatus, setEnvStatus] = useState({});
+  const [googleDebugInfo, setGoogleDebugInfo] = useState(null);
+  const [dbUserData, setDbUserData] = useState(null);
+  const [activeTab, setActiveTab] = useState('manual');
+  
+  // Check for Google auth session on load
+  useEffect(() => {
+    fetchGoogleAuthData();
+  }, []);
+  
+  const fetchGoogleAuthData = async () => {
+    try {
+      // Get current session
+      const { data: sessionResponse, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        return;
+      }
+      
+      // Store Google auth info if available
+      if (sessionResponse.session?.user) {
+        setGoogleDebugInfo(sessionResponse.session);
+        
+        // Check if provider is Google
+        const provider = sessionResponse.session.user.app_metadata?.provider;
+        
+        if (provider === 'google') {
+          // Try to fetch user from database
+          const { data: userData, error: userError } = await supabase
+            .from('Users')
+            .select('*')
+            .eq('email', sessionResponse.session.user.email)
+            .single();
+            
+          if (userError && !userError.message.includes('No rows found')) {
+            console.error('Error fetching user data:', userError);
+          } else {
+            setDbUserData(userData || null);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching Google auth data:', err);
+    }
+  };
   
   // Check environment variables on initial load
-  useState(() => {
+  useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     

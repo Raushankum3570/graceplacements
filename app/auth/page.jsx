@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { useRouter } from 'next/navigation'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import GoogleButton from '@/components/GoogleButton'
 
 function Login() {
   const router = useRouter()
@@ -17,6 +18,7 @@ function Login() {
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [resendLoading, setResendLoading] = useState(false)
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -281,7 +283,118 @@ function Login() {
       setLoading(false);
     }
   };
+    const signInWithGoogle = async () => {
+    setGoogleLoading(true);
+    setError(null);
+    
+    try {
+      // Get site URL for proper redirects
+      let redirectUrl;
+      if (typeof window !== 'undefined') {
+        redirectUrl = window.location.origin;
+      } else {
+        // Fallback for server-side rendering
+        redirectUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://grace-placement.vercel.app';
+      }
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${redirectUrl}/auth`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      
+      if (error) throw error;
+      
+      // If we get here without an error, the user is being redirected to Google
+      console.log('Redirecting to Google OAuth...', data);
+      
+      // No need to handle success case - the user will be redirected away
+      
+    } catch (err) {
+      console.error('Google sign-in error:', err);
+      setError(err.message || 'Failed to connect to Google. Please try again.');
+      setGoogleLoading(false);
+    }
+  };
   
+  // Function to handle user data after successful OAuth login
+  const handleUserAfterOAuth = async (user) => {
+    // Check if this is a new user (first Google login)
+    const { data, error } = await supabase
+      .from('Users')
+      .select('*')
+      .eq('email', user.email)
+      .single();
+    
+    if (error || !data) {
+      // New user, create a record in the Users table
+      const isAdminEmail = user.email.toLowerCase().includes('admin') || 
+                          user.email.toLowerCase().includes('gracecoe.org');
+      
+      const { error: insertError } = await supabase
+        .from('Users')
+        .insert([{
+          email: user.email.toLowerCase(),
+          name: user.user_metadata?.full_name || user.email.split('@')[0],
+          is_admin: isAdminEmail,
+          created_at: new Date().toISOString()
+        }]);
+      
+      if (insertError) {
+        console.error('Error storing Google user data:', insertError);
+      }
+    }
+    
+    // Redirect based on user type
+    if (user.email.toLowerCase().includes('admin') || 
+        user.email.toLowerCase().includes('gracecoe.org')) {
+      router.push('/admin');
+    } else {
+      router.push('/');
+    }
+  };
+  
+  // Effect to handle OAuth redirects
+  useEffect(() => {
+    const handleAuthStateChange = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.provider_token && session?.provider_refresh_token) {
+        // This is an OAuth session (e.g., Google)
+        const user = session.user;
+        console.log('OAuth session detected:', user.provider);
+        
+        // Process user data and redirect
+        await handleUserAfterOAuth(user);
+      }
+    };
+    
+    // Check for OAuth session on mount
+    handleAuthStateChange();
+    
+    // Subscribe to auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.provider_token) {
+          // User just signed in with OAuth
+          await handleUserAfterOAuth(session.user);
+        }
+      }
+    );
+    
+    // Cleanup
+    return () => {
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
+  }, [router]);
+
   const switchToSignUp = () => {
     setActiveTab("signup");
     setError(null);
@@ -387,14 +500,27 @@ function Login() {
                           {forgotPasswordLoading ? 'Sending reset email...' : 'Forgot password?'}
                       </button>
                     </div>
-                  </div>
-                  <Button 
+                  </div>                  <Button 
                     type="submit" 
                     className="w-full" 
-                    disabled={loading}
+                    disabled={loading || googleLoading}
                   >
-                    {loading ? 'Signing in...' : 'Sign In'}
+                    {loading ? 'Signing in...' : 'Sign In with Email'}
                   </Button>
+                  
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-gray-300"></span>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                    </div>
+                  </div>
+                  
+                  <GoogleButton 
+                    onClick={signInWithGoogle} 
+                    loading={googleLoading} 
+                  />
                   
                   <p className="text-sm text-center text-gray-500 mt-4">
                     Don&apos;t have an account?{" "}
@@ -445,14 +571,27 @@ function Login() {
                     <p className="text-xs text-gray-500 mt-1">
                       Password must be at least 6 characters long
                     </p>
-                  </div>
-                  <Button 
+                  </div>                  <Button 
                     type="submit" 
                     className="w-full" 
-                    disabled={loading}
+                    disabled={loading || googleLoading}
                   >
-                    {loading ? 'Creating account...' : 'Create Account'}
+                    {loading ? 'Creating account...' : 'Create Account with Email'}
                   </Button>
+                  
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-gray-300"></span>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                    </div>
+                  </div>
+                  
+                  <GoogleButton 
+                    onClick={signInWithGoogle} 
+                    loading={googleLoading} 
+                  />
                 </form>
               </TabsContent>
             </Tabs>            {/* Email-based authentication only */}

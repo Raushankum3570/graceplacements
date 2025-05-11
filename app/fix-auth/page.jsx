@@ -5,14 +5,119 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
+import { supabase } from '@/services/supabaseClient';
 
 export default function FixAuthenticationPage() {
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState(null);
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState(null);
+  
+  // Function to fix the auth_id column type issue
+  const fixAuthIdColumnType = async () => {
+    setLoading(true);
+    setStatus('Fixing auth_id column type...');
+    
+    try {
+      // First ensure the uuid-ossp extension is installed
+      await supabase.rpc('execute_sql', {
+        sql_query: `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`
+      });
+      
+      // Execute the first part - drop the column safely
+      await supabase.rpc('execute_sql', {
+        sql_query: `
+          DO $$
+          BEGIN
+            BEGIN
+              ALTER TABLE public."Users" DROP COLUMN auth_id;
+              RAISE NOTICE 'Dropped existing auth_id column';
+            EXCEPTION WHEN undefined_column THEN
+              RAISE NOTICE 'auth_id column does not exist yet';
+            END;
+          END $$;
+        `
+      });
+      
+      // Execute the second part - create the column with correct type
+      await supabase.rpc('execute_sql', {
+        sql_query: `
+          -- Add the column back with correct UUID type  
+          ALTER TABLE public."Users" ADD COLUMN auth_id UUID;
+          
+          -- Make sure other columns exist too
+          ALTER TABLE public."Users" ADD COLUMN IF NOT EXISTS provider TEXT;
+          ALTER TABLE public."Users" ADD COLUMN IF NOT EXISTS picture TEXT;
+        `
+      });
+      
+      setStatus('✅ Fix successful! The auth_id column is now a UUID type.');
+      
+    } catch (err) {
+      console.error('Error fixing auth_id column:', err);
+      setError(err.message);
+      setStatus('❌ Failed to fix auth_id column type. See error message below.');
+    } finally {
+      setLoading(false);
+    }
+  };
   
   return (
     <div className="container mx-auto p-4 max-w-3xl">
       <h1 className="text-3xl font-bold mb-6 text-center">Authentication Troubleshooting</h1>
+      
+      {/* New Card for the auth_id column type issue */}
+      <Card className="p-6 mb-6 border-2 border-yellow-300">
+        <h2 className="text-2xl font-semibold mb-4">Fix Google Authentication UUID Error</h2>
+        
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>
+            <span className="font-bold">Error with Google Auth: "invalid input syntax for type bigint/double precision: uuid-string"</span>
+          </AlertDescription>
+        </Alert>
+        
+        <div className="mb-6">
+          <p className="mb-2">This error occurs because the <code>auth_id</code> column in your Users table has the wrong data type:</p>
+          <ul className="list-disc pl-6 mb-4">
+            <li>Your database has the column as <code>bigint</code> or <code>double precision</code> type</li>
+            <li>Google authentication generates UUID strings like "ae95fbd1-172e-4d17-af00-ee27c8ac11d4"</li>
+            <li>PostgreSQL can't convert the UUID string to a number automatically</li>
+          </ul>
+        </div>
+        
+        <div className="flex justify-between items-center mb-4">
+          <Button 
+            onClick={fixAuthIdColumnType}
+            disabled={loading}
+            className="bg-yellow-600 hover:bg-yellow-700"
+          >
+            {loading ? 'Fixing...' : 'Fix auth_id Column Type'}
+          </Button>
+          
+          <Link href="/google-auth-debug">
+            <Button variant="outline">
+              Advanced Debugging
+            </Button>
+          </Link>
+        </div>
+        
+        {status && (
+          <div className={`mt-4 p-3 rounded-md ${
+            status.includes('✅') ? 'bg-green-100 border border-green-200' : 
+            status.includes('❌') ? 'bg-red-100 border border-red-200' :
+            'bg-yellow-100 border border-yellow-200'
+          }`}>
+            <p>{status}</p>
+          </div>
+        )}
+        
+        {error && (
+          <div className="mt-4 p-3 rounded-md bg-red-100 border border-red-200">
+            <p className="font-bold">Error:</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+      </Card>
       
       <Card className="p-6 mb-6">
         <h2 className="text-2xl font-semibold mb-4">Fix Sign In/Sign Up Issues</h2>

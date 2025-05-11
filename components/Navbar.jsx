@@ -282,12 +282,20 @@ export default function Navbar() {  const [isMobileMenuOpen, setIsMobileMenuOpen
                 </button>
                 
                 {isProfileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-                    <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">                      <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                       <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
                         Signed in as <span className="font-medium text-blue-600">{user.email}</span>
                       </div>
-                        {(user.is_admin || user.is_admin_computed) && (
+                      
+                      <Link 
+                        href="/profile" 
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      >
+                        Your Profile
+                      </Link>
+                      
+                      {(user.is_admin || user.is_admin_computed) && (
                         <Link 
                           href="/admin" 
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -296,8 +304,6 @@ export default function Navbar() {  const [isMobileMenuOpen, setIsMobileMenuOpen
                           Admin Dashboard
                         </Link>
                       )}
-                      
-                      
                       
                       <button
                         onClick={handleSignOut}
@@ -420,17 +426,15 @@ export default function Navbar() {  const [isMobileMenuOpen, setIsMobileMenuOpen
                     </svg>
                     Admin Dashboard
                   </Link>
-                )}
-
-                <Link 
-                  href="#"
+                )}                <Link 
+                  href="/profile"
                   className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <svg className="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                   </svg>
-                  Profile Settings
+                  Your Profile
                 </Link>
 
                 <button

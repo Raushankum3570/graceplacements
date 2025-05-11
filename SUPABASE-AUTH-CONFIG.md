@@ -40,15 +40,37 @@ After enabling email authentication in the Supabase dashboard, test your authent
 
 ## Additional Authentication Options
 
-If you prefer not to use email authentication, Supabase supports other authentication providers:
+The application now supports Google authentication along with email/password. Here's how to enable and configure these options:
 
-- **Google, GitHub, Facebook** etc. (OAuth providers)
+### Google Authentication (OAuth)
+
+1. **Enable Google Provider in Supabase Dashboard**
+   - Go to the **Providers** page in your Supabase Authentication settings
+   - Find "Google" in the list of providers
+   - Toggle it ON
+   - Enter your Google OAuth Client ID and Secret
+   - Configure the redirect URL (should match your app's URL)
+   - Detailed setup instructions are available in `GOOGLE-AUTH-SETUP.md`
+
+2. **Configure Environment Variables**
+   - Make sure to set the following environment variables:
+     ```
+     NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
+     ```
+   - Set this in both `.env.local` for development and in your production environment
+
+### Other Authentication Methods
+
+Supabase also supports additional authentication providers that can be enabled:
+
+- **GitHub, Facebook, Twitter** etc. (OAuth providers)
 - **Phone authentication** (SMS OTP)
 - **Magic Link** (passwordless email link)
 
 To enable these:
 1. Go to the **Providers** page in your Supabase Authentication settings
 2. Enable the desired providers
+3. Configure each provider according to its specific requirements
 3. Configure any required API keys or credentials
 
 ## Troubleshooting

@@ -8,14 +8,56 @@ import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
 import { ADMIN_EMAILS, ADMIN_PASSWORDS } from '@/lib/admin';
+import GoogleButton from '@/components/GoogleButton';
+import { Separator } from '@/components/ui/separator';
 
 export default function AdminAuth() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  
+  // Handle admin sign in with Google
+  const signInWithGoogle = async () => {
+    setGoogleLoading(true);
+    setError(null);
+    
+    try {
+      // Get site URL for proper redirects
+      let redirectUrl;
+      if (typeof window !== 'undefined') {
+        redirectUrl = window.location.origin;
+      } else {
+        // Fallback for server-side rendering
+        redirectUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://grace-placement.vercel.app';
+      }
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {              redirectTo: `${redirectUrl}/`, // Redirect to home page after authentication
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      
+      if (error) throw error;
+      
+      // If we get here without an error, the user is being redirected to Google
+      console.log('Redirecting to Google OAuth...', data);
+      
+    } catch (err) {
+      console.error('Google sign-in error:', err);
+      setError(err.message || 'Failed to connect to Google. Please try again.');
+      setGoogleLoading(false);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   // Handle admin sign in with email/password
   const signInWithEmail = async (e) => {
@@ -61,7 +103,7 @@ export default function AdminAuth() {
                       password,
                       options: { 
                         data: { is_admin: true },
-                        emailRedirectTo: window.location.origin + '/admin'
+                        emailRedirectTo: window.location.origin + '/'
                       }
                     });
                     
@@ -110,9 +152,8 @@ export default function AdminAuth() {
                     updated_at: new Date().toISOString()
                   },
                   { onConflict: 'email' }
-                );                
-              // Redirect directly to admin dashboard
-              window.location.href = '/admin';
+                );                  // Redirect to home page
+              window.location.href = '/';
               return; // Exit early as we've handled everything
             } catch (specialAuthErr) {
               console.error('Error in admin auth flow:', specialAuthErr);
@@ -171,7 +212,6 @@ export default function AdminAuth() {
       setLoading(false);
     }
   };
-
   // Handle auth state changes
   useEffect(() => {
     const handleAuthCheck = async () => {
@@ -183,7 +223,9 @@ export default function AdminAuth() {
           
           // Check if this is an admin email
           const isAdminEmail = ADMIN_EMAILS.includes(user.email?.toLowerCase());
+          const isGoogleLogin = user.app_metadata?.provider === 'google';
           
+          // Check if this is a Google login from an admin email
           if (isAdminEmail) {
             // Update user metadata to mark as admin
             await supabase.auth.updateUser({
@@ -193,13 +235,22 @@ export default function AdminAuth() {
             // Update in database table too
             await supabase
               .from('Users')
-              .update({ is_admin: true })
-              .eq('email', user.email.toLowerCase());
-            
-            setSuccess('Admin authentication successful! Redirecting...');
-            // Redirect to admin page
+              .upsert(
+                {
+                  email: user.email.toLowerCase(),
+                  name: user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0],
+                  picture: user.user_metadata?.avatar_url || user.user_metadata?.picture,
+                  provider: user.app_metadata?.provider || 'email',
+                  is_admin: true,
+                  last_sign_in: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                },
+                { onConflict: 'email' }
+              );
+              setSuccess('Admin authentication successful! Redirecting...');
+            // Redirect to home page
             setTimeout(() => {
-              window.location.href = '/admin';
+              window.location.href = '/';
             }, 1000);
           } else if (user.email) {
             // Not an admin email, sign them out
@@ -214,27 +265,40 @@ export default function AdminAuth() {
         setLoading(false);
       }
     };
+      // Call the auth check function immediately
+    handleAuthCheck();
     
-    // Call the auth check function immediately
-    handleAuthCheck();    const { data: authListener } = supabase.auth.onAuthStateChange(
+    const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
           // Check if admin email
           const isAdmin = ADMIN_EMAILS.includes(session.user.email?.toLowerCase());
+          const isGoogleLogin = session.user.app_metadata?.provider === 'google';
+          
           if (isAdmin) {
+            // This is an admin account
+            console.log('Admin signed in successfully', isGoogleLogin ? 'using Google' : 'using email');
+            
             // Update user metadata to mark as admin
             await supabase.auth.updateUser({
               data: { is_admin: true }
             });
             
-            // Mark this user as an admin in the database
+            // Mark this user as an admin in the database with complete profile
             try {
               await supabase
                 .from('Users')
                 .upsert(
                   { 
                     email: session.user.email.toLowerCase(),
+                    name: session.user.user_metadata?.full_name || 
+                          session.user.user_metadata?.name ||
+                          session.user.email.split('@')[0],
+                    picture: session.user.user_metadata?.avatar_url || 
+                             session.user.user_metadata?.picture,
+                    provider: session.user.app_metadata?.provider || 'email',
                     is_admin: true,
+                    last_sign_in: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                   },
                   { onConflict: 'email' }
@@ -244,22 +308,24 @@ export default function AdminAuth() {
             } catch (err) {
               console.error('Error updating admin status in database', err);
             }
-            
-            setSuccess('Admin authentication successful! Redirecting...');
+              setSuccess('Admin authentication successful! Redirecting...');
             setTimeout(() => {
-              window.location.href = '/admin';
+              window.location.href = '/';
             }, 1000);
           } else {
             // Not an admin, sign out and redirect
             await supabase.auth.signOut();
             setError('Unauthorized access: Your email is not registered as an admin account.');
             setLoading(false);
-            
-            // Redirect regular users to standard login
+            setGoogleLoading(false);
+              // Redirect to home page
             setTimeout(() => {
-              router.push('/auth');
+              router.push('/');
             }, 2000);
           }
+        } else if (event === 'SIGNED_OUT') {
+          setLoading(false);
+          setGoogleLoading(false);
         }
       }
     );
@@ -281,14 +347,11 @@ export default function AdminAuth() {
             width={180} 
             height={60} 
             className="mx-auto"
-          />
-          <h1 className="text-2xl font-bold mt-6">Admin Access</h1>
+          />          <h1 className="text-2xl font-bold mt-6">Admin Access</h1>
           <p className="text-gray-500 mt-2">
-            Restricted area for authorized administrators only
+            Sign in to access administrator features
           </p>
-        </div>
-
-        {error && (
+        </div>        {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertDescription>
               <div className="font-bold">Access Denied</div>
@@ -296,17 +359,24 @@ export default function AdminAuth() {
             </AlertDescription>
           </Alert>
         )}
-
+        
         {success && (
           <Alert className="mb-6 bg-green-50 text-green-800 border-green-200">
             <AlertDescription>{success}</AlertDescription>
           </Alert>
-        )}        <Card className="p-8 shadow-lg">
+        )}
+        
+        <Card className="p-8 shadow-lg">
           <div className="text-center mb-6">
             <h2 className="text-xl font-semibold">Admin Sign In</h2>
             <p className="text-gray-600 mt-2">
               Sign in with your administrator credentials
-            </p>
+            </p>          </div>
+
+          <div className="relative my-4">
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-gray-500">
+              Admin Sign In Options
+            </span>
           </div>
 
           <form onSubmit={signInWithEmail} className="space-y-4">
@@ -341,11 +411,18 @@ export default function AdminAuth() {
             >
               {loading ? 'Authenticating...' : 'Sign In as Administrator'}
             </Button>
-          </form>
-          
-          <div className="mt-6 text-center text-sm text-gray-600">
-            <p>Only authorized admin accounts can access this portal.</p>
+          </form>          <Separator className="my-6" />
+            <div className="flex flex-col items-center">
+            <p className="text-sm text-gray-600 mb-2">Admin emails can also sign in with:</p>
+            <GoogleButton 
+              onClick={signInWithGoogle}
+              loading={googleLoading}
+              className="w-full"
+            />
+          </div>            <div className="mt-6 text-center text-sm text-gray-600">
+            <p>Only authorized admin accounts can access admin features.</p>
             <p className="mt-2">Your email must be on the approved administrator list.</p>
+            <p className="mt-2 text-blue-600 font-medium">After signing in, you'll be redirected to the home page</p>
           </div>
         </Card>
         
