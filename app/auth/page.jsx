@@ -1,5 +1,5 @@
 "use client"
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/services/supabaseClient'
 import Image from 'next/image'
@@ -21,8 +21,21 @@ function Login() {
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
-  const [activeTab, setActiveTab] = useState("signin")
+  const [activeTab, setActiveTab] = useState("signin")  
   const [unverifiedEmail, setUnverifiedEmail] = useState(null)
+  
+  // Check for query parameters like reset=success when the component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const resetStatus = urlParams.get('reset');
+      
+      if (resetStatus === 'success') {
+        setSuccess('Your password has been reset successfully. You can now sign in with your new password.');
+      }
+    }
+  }, []);
+  
   // We're using email-based authentication only
   const signInWithEmail = async (e) => {
     e.preventDefault()
@@ -124,8 +137,7 @@ function Login() {
       setResendLoading(false)
     }
   };
-  
-  const handleForgotPassword = async () => {
+    const handleForgotPassword = async () => {
     // Make sure we have an email
     if (!email || email.trim() === '') {
       setError('Please enter your email address first');
@@ -140,16 +152,19 @@ function Login() {
       // Get site URL for redirects - this is crucial for making sure it works on Vercel
       let redirectUrl;
       if (typeof window !== 'undefined') {
-        // Use production URL in deployment, localhost for development
-        redirectUrl = window.location.hostname.includes('localhost') 
+        // Get the base URL dynamically
+        const baseUrl = window.location.hostname.includes('localhost') 
           ? window.location.origin 
           : 'https://grace-placement.vercel.app';
           
         // Add the reset-password path
-        redirectUrl += '/auth?reset=true';
+        redirectUrl = `${baseUrl}/reset-password`;
+        
+        console.log('Password reset redirect URL:', redirectUrl);
+      } else {
+        // Fallback if running on server
+        redirectUrl = 'https://grace-placement.vercel.app/reset-password';
       }
-      
-      console.log('Password reset redirect URL:', redirectUrl);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: redirectUrl

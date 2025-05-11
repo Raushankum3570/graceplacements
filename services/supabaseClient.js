@@ -30,9 +30,16 @@ const getSiteUrl = () => {
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       console.log(`Using exact local URL: ${origin}`);
       return origin;
-    } else {      // For production deployment, use current origin or hardcoded URL as fallback
-      const productionUrl = origin || 'https://grace-placement.vercel.app';
-      console.log(`Using production URL: ${productionUrl}`);
+    } else {      // For production deployment, use current origin or explicitly set the Vercel domain
+      let productionUrl = origin;
+      
+      // If the origin doesn't contain the expected Vercel domain, use the hardcoded URL
+      if (!origin.includes('grace-placement.vercel.app')) {
+        productionUrl = 'https://grace-placement.vercel.app';
+        console.log(`Using hardcoded production URL: ${productionUrl} instead of ${origin}`);
+      } else {
+        console.log(`Using current origin as production URL: ${productionUrl}`);
+      }
       return productionUrl;
     }
   }
