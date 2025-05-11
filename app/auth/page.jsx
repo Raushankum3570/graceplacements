@@ -13,15 +13,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 
 function Login() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('')  const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [resendLoading, setResendLoading] = useState(false)
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [activeTab, setActiveTab] = useState("signin")
-  const [unverifiedEmail, setUnverifiedEmail] = useState(null)  // We're using email-based authentication only
+  const [unverifiedEmail, setUnverifiedEmail] = useState(null)
+  // We're using email-based authentication only
   const signInWithEmail = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -115,12 +116,52 @@ function Login() {
         type: 'signup',
         email: unverifiedEmail
       });
-      if (error) throw error;
-      setSuccess(`Verification email resent to ${unverifiedEmail}. Please check your inbox.`);
+      if (error) throw error;      setSuccess(`Verification email resent to ${unverifiedEmail}. Please check your inbox.`);
     } catch (err) {
       console.error('Error resending verification email:', err)
       setError(err.message)    } finally {
       setResendLoading(false)
+    }
+  };
+  
+  const handleForgotPassword = async () => {
+    // Make sure we have an email
+    if (!email || email.trim() === '') {
+      setError('Please enter your email address first');
+      return;
+    }
+    
+    setForgotPasswordLoading(true);
+    setError(null);
+    setSuccess(null);
+    
+    try {
+      // Get site URL for redirects - this is crucial for making sure it works on Vercel
+      let redirectUrl;
+      if (typeof window !== 'undefined') {
+        // Use production URL in deployment, localhost for development
+        redirectUrl = window.location.hostname.includes('localhost') 
+          ? window.location.origin 
+          : 'https://grace-placement.vercel.app';
+          
+        // Add the reset-password path
+        redirectUrl += '/auth?reset=true';
+      }
+      
+      console.log('Password reset redirect URL:', redirectUrl);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: redirectUrl
+      });
+      
+      if (error) throw error;
+      
+      setSuccess(`Password reset email sent to ${email}. Please check your inbox.`);
+    } catch (err) {
+      console.error('Error sending password reset email:', err);
+      setError(err.message || 'Failed to send password reset email. Please try again.');
+    } finally {
+      setForgotPasswordLoading(false);
     }
   };
   
@@ -144,12 +185,13 @@ function Login() {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: {
-          data: {
+        options: {          data: {
             name,
             is_admin: isAdminEmail // Set admin flag based on email domain
           },
-          emailRedirectTo: window.location.origin
+          emailRedirectTo: typeof window !== 'undefined' ? 
+            (window.location.hostname.includes('localhost') ? window.location.origin : 'https://grace-placement.vercel.app') 
+            : 'https://grace-placement.vercel.app'
         }      });
       
       if (error) {
@@ -326,9 +368,13 @@ function Login() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                    />
-                    <div className="text-right text-sm mt-1">
-                      <a href="#" className="text-blue-600 hover:underline">Forgot password?</a>
+                    />                    <div className="text-right text-sm mt-1">                      <button 
+                        type="button" 
+                        onClick={() => handleForgotPassword()} 
+                        disabled={forgotPasswordLoading}
+                        className="text-blue-600 hover:underline">
+                          {forgotPasswordLoading ? 'Sending reset email...' : 'Forgot password?'}
+                      </button>
                     </div>
                   </div>
                   <Button 
