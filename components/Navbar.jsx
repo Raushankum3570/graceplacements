@@ -31,6 +31,11 @@ export default function Navbar() {  const [isMobileMenuOpen, setIsMobileMenuOpen
     return true;
   };
 
+  // Debug logging for user state
+  useEffect(() => {
+    console.log('Current user state in Navbar:', user);
+  }, [user]);
+
   // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
@@ -44,8 +49,7 @@ export default function Navbar() {  const [isMobileMenuOpen, setIsMobileMenuOpen
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [scrolled]);
-  // Handle click outside for profile dropdown
+  }, [scrolled]);  // Handle click outside for profile dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isProfileMenuOpen && !event.target.closest('#profile-dropdown')) {
@@ -54,17 +58,31 @@ export default function Navbar() {  const [isMobileMenuOpen, setIsMobileMenuOpen
     };    // Listen for custom auth update events
     const handleAuthUpdate = (event) => {
       console.log('Navbar received auth update event', event.detail);
-      // Use our helper to safely refresh session data
+      
+      // If the event already has user data attached, use it directly
+      if (event.detail?.user) {
+        console.log('Navbar: Using user data from event directly');
+        setUser(event.detail.user);
+        return;
+      }
+      
+      // Otherwise, use our helper to safely refresh session data
       const refreshUserSession = async () => {
         try {
+          console.log('Navbar: Refreshing user session data');
           const { user: fetchedUser } = await getSessionAndUser();
           
           if (fetchedUser) {
-            console.log('Navbar refreshed user data successfully');
+            console.log('Navbar: User data refreshed successfully', {
+              email: fetchedUser.email,
+              name: fetchedUser.name,
+              has_picture: !!fetchedUser.picture,
+              is_admin: fetchedUser.is_admin
+            });
             
             // Check if the user is an admin and redirect if necessary
             if (fetchedUser.is_admin) {
-              console.log('Admin user detected in navbar');
+              console.log('Navbar: Admin user detected');
               // If on regular auth page, redirect to admin
               if (pathname === '/auth') {
                 router.push('/admin');
@@ -73,7 +91,7 @@ export default function Navbar() {  const [isMobileMenuOpen, setIsMobileMenuOpen
             } else {
               // Regular user - if on admin pages, redirect to home
               if (pathname.startsWith('/admin')) {
-                console.log('Regular user on admin page, redirecting to home');
+                console.log('Navbar: Regular user on admin page, redirecting to home');
                 router.push('/');
                 return;
               }

@@ -283,11 +283,14 @@ function Login() {
       setLoading(false);
     }
   };
-    const signInWithGoogle = async () => {
+  const signInWithGoogle = async () => {
     setGoogleLoading(true);
     setError(null);
+    setSuccess("Connecting to Google...");
     
     try {
+      console.log('Auth: Starting Google sign-in process');
+      
       // Get site URL for proper redirects
       let redirectUrl;
       if (typeof window !== 'undefined') {
@@ -297,10 +300,12 @@ function Login() {
         redirectUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://grace-placement.vercel.app';
       }
       
+      console.log('Auth: Using redirect URL:', redirectUrl);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${redirectUrl}/auth`,
+          redirectTo: `${redirectUrl}/`,  // Redirect to home page after authentication
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -308,17 +313,25 @@ function Login() {
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Auth: Google OAuth error:', error);
+        throw error;
+      }
       
       // If we get here without an error, the user is being redirected to Google
-      console.log('Redirecting to Google OAuth...', data);
+      console.log('Auth: Redirecting to Google OAuth...', data);
+      setSuccess("Redirecting to Google...");
       
       // No need to handle success case - the user will be redirected away
       
     } catch (err) {
-      console.error('Google sign-in error:', err);
+      console.error('Auth: Google sign-in error:', err);
       setError(err.message || 'Failed to connect to Google. Please try again.');
+      setSuccess(null);
       setGoogleLoading(false);
+    } finally {
+      // Google OAuth redirects the user, so we won't reach this code unless there was an error
+      // that prevented the redirect
     }
   };
   

@@ -19,13 +19,15 @@ export default function AdminAuth() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  
-  // Handle admin sign in with Google
+    // Handle admin sign in with Google
   const signInWithGoogle = async () => {
     setGoogleLoading(true);
     setError(null);
+    setSuccess("Connecting to Google...");
     
     try {
+      console.log('AdminAuth: Starting Google sign-in process');
+      
       // Get site URL for proper redirects
       let redirectUrl;
       if (typeof window !== 'undefined') {
@@ -35,9 +37,12 @@ export default function AdminAuth() {
         redirectUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://grace-placement.vercel.app';
       }
       
+      console.log('AdminAuth: Using redirect URL:', redirectUrl);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {              redirectTo: `${redirectUrl}/`, // Redirect to home page after authentication
+        options: {
+          redirectTo: `${redirectUrl}/`, // Redirect to home page after authentication
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -45,16 +50,22 @@ export default function AdminAuth() {
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('AdminAuth: Google OAuth error:', error);
+        throw error;
+      }
       
       // If we get here without an error, the user is being redirected to Google
-      console.log('Redirecting to Google OAuth...', data);
-      
-    } catch (err) {
-      console.error('Google sign-in error:', err);
+      console.log('AdminAuth: Redirecting to Google OAuth...', data);
+      setSuccess("Redirecting to Google...");
+        } catch (err) {
+      console.error('AdminAuth: Google sign-in error:', err);
       setError(err.message || 'Failed to connect to Google. Please try again.');
+      setSuccess(null);
       setGoogleLoading(false);
     } finally {
+      // Google OAuth redirects the user, so we won't reach this code unless there was an error
+      // that prevented the redirect. In that case, we ensure googleLoading is reset.
       setGoogleLoading(false);
     }
   };

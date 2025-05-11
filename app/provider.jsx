@@ -83,24 +83,26 @@ function Provider({ children }) {
     
     initializeAuth();
   }, [router]);
-      const createOrFetchUser = async (authUser) => {
+    const createOrFetchUser = async (authUser) => {
     if (!authUser) {
-      console.log('No auth user provided');
+      console.log('Provider: No auth user provided');
       return;
     }
     
-    console.log('Processing user:', authUser.email);
+    console.log('Provider: Processing user:', authUser.email);
+    console.log('Provider: Auth metadata:', JSON.stringify(authUser.app_metadata));
+    console.log('Provider: User metadata:', JSON.stringify(authUser.user_metadata));
       
     try {
       // Using the centralized admin emails list from lib/admin.js
       
       // Check if this is an admin by email
       const isAdminUser = ADMIN_EMAILS.includes(authUser.email.toLowerCase());
-      console.log('Admin by email?', isAdminUser);
+      console.log('Provider: Admin by email?', isAdminUser);
       
       // Check for admin status in user metadata
       const isAdminInMetadata = authUser.user_metadata?.is_admin === true;
-      console.log('Admin in metadata?', isAdminInMetadata);
+      console.log('Provider: Admin in metadata?', isAdminInMetadata);
       
       // First check if user exists in our Users table
       const { data: existingUsers, error: fetchError } = await supabase
@@ -175,29 +177,39 @@ function Provider({ children }) {
             window.dispatchEvent(userUpdateEvent);
             console.log('User creation event dispatched');
           }
-        }      } else {
-        // User exists, check if we need to update profile data from Google
+        }      } else {        // User exists, check if we need to update profile data from Google
         const userPicture = authUser.user_metadata?.picture || 
                            authUser.user_metadata?.avatar_url;
         
         const userName = authUser.user_metadata?.name || 
                         authUser.user_metadata?.full_name;
+                        
+        console.log('Provider: Existing user update - Picture available:', !!userPicture);
+        console.log('Provider: Existing user update - Name available:', !!userName);
           // Update user with the latest data from Google if needed
         try {
           // Start with basic updates that we know will work
           const updates = {
             is_admin: finalAdminStatus,
-            last_sign_in: new Date().toISOString()
+            last_sign_in: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           };
-          
-          // Only update name and picture if provided by Google OAuth
-          if (userName) updates.name = userName;
-          if (userPicture) updates.picture = userPicture;
-          
-          // Update provider info if missing
-          if (!existingUser.provider && authUser.app_metadata?.provider) {
+            // Always update provider info if available from OAuth
+          if (authUser.app_metadata?.provider) {
             updates.provider = authUser.app_metadata.provider;
-          }          // We're no longer updating auth_id to avoid type conversion issues
+          }
+          
+          // Only update name if we have a new one from Google and the existing one is empty or default
+          if (userName && (!existingUser.name || existingUser.name === existingUser.email.split('@')[0])) {
+            updates.name = userName;
+            console.log('Provider: Updating user name to:', userName);
+          }
+          
+          // Only update picture if we have a new one from Google and the existing one is empty
+          if (userPicture && !existingUser.picture) {
+            updates.picture = userPicture;
+            console.log('Provider: Updating user picture to:', userPicture);
+          }// We're no longer updating auth_id to avoid type conversion issues
           console.log('Skipping auth_id update to avoid type conversion issues');
           
           const { error: updateError } = await supabase
@@ -214,18 +226,41 @@ function Provider({ children }) {
           }
         } catch (err) {
           console.error("Failed to update user profile:", err);
-        }
-          // User exists, add computed admin status to the object
-        existingUser.is_admin_computed = finalAdminStatus;
-        setUser(existingUser);
+        }          // Create a complete user object with data from both database and auth
+        const completeUser = {
+          ...existingUser,
+          is_admin_computed: finalAdminStatus,
+          // Ensure these fields are always available
+          name: existingUser.name || userName || authUser.email.split('@')[0],
+          picture: existingUser.picture || userPicture,
+          provider: existingUser.provider || authUser.app_metadata?.provider || 'email',
+          email: authUser.email // Always use the email from auth
+        };
+        
+        console.log('Provider: Setting complete user data:', 
+          JSON.stringify({
+            email: completeUser.email,
+            name: completeUser.name,
+            has_picture: !!completeUser.picture,
+            provider: completeUser.provider,
+            is_admin: completeUser.is_admin,
+            is_admin_computed: completeUser.is_admin_computed
+          })
+        );
+        
+        setUser(completeUser);
         
         // Broadcast existing user update for navbar and other components
         if (typeof window !== 'undefined') {
           const userUpdateEvent = new CustomEvent('supabase-auth-update', { 
-            detail: { action: 'user_fetched', user: existingUser, timestamp: new Date().getTime() } 
+            detail: { 
+              action: 'user_fetched', 
+              user: completeUser, 
+              timestamp: new Date().getTime() 
+            } 
           });
           window.dispatchEvent(userUpdateEvent);
-          console.log('Existing user update event dispatched');
+          console.log('Provider: Existing user update event dispatched');
         }
       }
     } catch (error) {
